@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Sample Flex OSGi AMF Bundle
+Bundle-SymbolicName: uk.co.arum.osgi.amf3.sample
+Bundle-Version: 1.0.0
+Bundle-Activator: uk.co.arum.osgi.amf3.sample.bundle.Activator
+Bundle-Vendor: Arum Systems Ltd
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Import-Package: javax.servlet;version="2.4.0",
+ javax.servlet.http;version="2.4.0",
+ org.osgi.framework;version="1.3.0",
+ org.osgi.service.event;version="1.1.0";resolution:=optional,
+ org.osgi.service.http;version="1.2.0",
+ uk.co.arum.osgi.amf3,
+ uk.co.arum.osgi.amf3.flex.remoting.events,
+ uk.co.arum.osgi.amf3.http
+Export-Package: uk.co.arum.osgi.amf3.sample

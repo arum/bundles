@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE project [
+<!ENTITY ivy SYSTEM "ivy.inc">
+]>
+<project name="bundles-build" default="default">
+	
+	<property file="../${project.name}/classpath.properties" />
+	
+	<target name="clean">
+		<delete dir="dist" />
+		<mkdir dir="dist" />
+		<delete dir="${user.home}/.ivy2/local" />
+	</target>
+
+	<target name="default" depends="clean">
+		<!-- build all the bundles -->
+		<ant dir="../uk.co.arum.osgi.glue" target="complete" />
+		
+		<ant dir="../uk.co.arum.osgi.glue.sample" target="complete"  />
+		<ant dir="../uk.co.arum.osgi.amf3" target="complete" />
+		<ant dir="../uk.co.arum.osgi.amf3.flex.remoting" target="complete" />
+		<ant dir="../uk.co.arum.osgi.amf3.http" target="complete" />
+		<ant dir="../uk.co.arum.osgi.amf3.sample" target="complete" />
+		
+		<!-- copy the bundles to dist -->
+		<copy todir="dist" flatten="true">
+			<fileset dir="..">
+				<include name="**/dist/*.jar" />
+			</fileset>
+		</copy>		
+		
+		<!-- run bindex -->
+		
+		<!-- transform in to a HTML page for inclusion on website. -->
+		
+	</target>
+
+</project>

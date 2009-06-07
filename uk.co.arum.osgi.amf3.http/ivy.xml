@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ivy-module version="2.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd">
+	<info organisation="uk.co.arum" module="uk.co.arum.osgi.amf3.http" />
+	<publications>
+		<artifact name="uk.co.arum.osgi.amf3.http_1.0.0" ext="jar"/>
+	</publications>
+	<dependencies>
+		<dependency org="org.osgi" name="org.osgi.core" rev="4.1.0" />
+		<dependency org="org.osgi" name="org.osgi.core" rev="4.1.0" />
+		<dependency org="javax.servlet" name="javax.servlet" rev="2.4.0" />
+		<dependency org="uk.co.arum" name="uk.co.arum.osgi.amf3" rev="1.0.1" />
+		<dependency org="uk.co.arum" name="uk.co.arum.osgi.amf3.flex.remoting" rev="1.0.1" />
+	</dependencies>
+</ivy-module>

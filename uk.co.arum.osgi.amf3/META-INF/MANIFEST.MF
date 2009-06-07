@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: AMF Support for OSGi
+Bundle-SymbolicName: uk.co.arum.osgi.amf3
+Bundle-Version: 1.0.1
+Bundle-Vendor: Arum Systems Ltd
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-ClassPath: .
+Export-Package: flex.messaging.io,
+ org.granite.messaging.amf,
+ org.granite.messaging.amf.io,
+ org.granite.messaging.amf.io.util,
+ org.granite.util,
+ uk.co.arum.osgi.amf3,
+ uk.co.arum.osgi.amf3.io
+Import-Package: javax.xml.parsers,
+ javax.xml.transform,
+ javax.xml.transform.dom,
+ javax.xml.transform.stream,
+ org.w3c.dom,
+ org.xml.sax

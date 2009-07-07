@@ -1,15 +1,18 @@
 package uk.co.arum.osgi.glue.bundle;
 
 import java.lang.reflect.Method;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
@@ -22,10 +25,7 @@ import uk.co.arum.osgi.glue.Glueable;
 import uk.co.arum.osgi.glue.GlueableService;
 
 /**
- * 
- * 
  * @author brindy
- * 
  */
 public class GlueManager {
 
@@ -55,8 +55,32 @@ public class GlueManager {
 		extractRequiredBindings(glueable);
 		extractOptionalBindings(glueable);
 
-		// check it
-		check();
+		// try and satisfy all the bindings
+		Set<Bindings> allBindings = new HashSet<Bindings>();
+		allBindings.addAll(requiredBindingMethods.values());
+		allBindings.addAll(optionalBindingMethods.values());
+
+		for (Bindings bindings : allBindings) {
+
+			logService.log(LogService.LOG_DEBUG, "Searching for existing "
+					+ bindings.serviceName + "[" + bindings.serviceFilter
+					+ "] for " + glueable);
+			try {
+				ServiceReference[] refs = glueableContext.getServiceReferences(
+						bindings.serviceName, bindings.serviceFilter);
+				if (null != refs) {
+					for (ServiceReference ref : refs) {
+						bindings.serviceRegistered(glueableContext
+								.getService(ref));
+					}
+				}
+			} catch (InvalidSyntaxException e) {
+				e.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+		}
 	}
 
 	private void extractBindings(Glueable glueable, String bindMethodName,
@@ -92,10 +116,14 @@ public class GlueManager {
 				} catch (NoSuchMethodException e) {
 					// ignore
 				}
+
+				// we don't care if there's no unbind method - that's up to the
+				// developer to decide
 				if (null == bindings.unbindMethod) {
-					logService.log(LogService.LOG_DEBUG, "No matching "
-							+ unbindMethodName + " method found");
-					continue;
+					logService.log(LogService.LOG_INFO, "No matching "
+							+ unbindMethodName + " method found #"
+							+ actualUnbindMethodName + "("
+							+ paramType.getName() + ")");
 				}
 
 				bindings.serviceFilter = glueable.getServiceFilter(
@@ -104,20 +132,6 @@ public class GlueManager {
 				bindingMethods.put(bindings.serviceName, bindings);
 
 				try {
-					logService.log(LogService.LOG_DEBUG,
-							"Searching for existing " + bindings.serviceName
-									+ "[" + bindings.serviceFilter + "] for "
-									+ glueable);
-					ServiceReference[] refs = glueableContext
-							.getServiceReferences(bindings.serviceName,
-									bindings.serviceFilter);
-					if (null != refs) {
-						for (ServiceReference ref : refs) {
-							bindings.serviceRegistered(glueableContext
-									.getService(ref));
-						}
-					}
-
 					glueableContext.addServiceListener(bindings,
 							bindings.serviceFilter);
 				} catch (Exception e) {
@@ -140,8 +154,8 @@ public class GlueManager {
 
 	@SuppressWarnings("unchecked")
 	private void doActivate() {
+		logService.log(LogService.LOG_DEBUG, "Activating " + glueable);
 		try {
-			logService.log(LogService.LOG_DEBUG, "Activating " + glueable);
 
 			if (glueable instanceof Contextual) {
 				Contextual c = (Contextual) glueable;
@@ -179,7 +193,19 @@ public class GlueManager {
 	}
 
 	private void doDeactivate() {
+		if (!active) {
+			return;
+		}
+
+		logService.log(LogService.LOG_DEBUG, "Deactivating " + glueable);
 		try {
+			if (glueable instanceof GlueableService) {
+				for (ServiceRegistration reg : registrations) {
+					reg.unregister();
+				}
+				registrations.clear();
+			}
+
 			if (glueable instanceof Activatable) {
 				try {
 					Activatable act = (Activatable) glueable;
@@ -191,8 +217,9 @@ public class GlueManager {
 
 			if (glueable instanceof Contextual) {
 				Contextual c = (Contextual) glueable;
-				c.bindContext(glueableContext);
+				c.unbindContext(glueableContext);
 			}
+
 		} finally {
 			active = false;
 		}
@@ -200,23 +227,23 @@ public class GlueManager {
 	}
 
 	private void check() {
-		boolean satisfied = true;
+		int satisfied = 0;
 		for (Bindings methods : requiredBindingMethods.values()) {
 			if (methods.bound == null) {
 				logService.log(LogService.LOG_DEBUG, glueable
 						+ " not satisfied, missing (" + methods.serviceName
 						+ ")");
-				satisfied = false;
+			} else {
+				satisfied++;
+				logService.log(LogService.LOG_DEBUG, glueable + " found "
+						+ methods.serviceName + " (" + satisfied + "/"
+						+ requiredBindingMethods.size() + ")");
 			}
 		}
 
-		if (!active && satisfied) {
+		if (!active && satisfied == requiredBindingMethods.size()) {
 			doActivate();
 		}
-	}
-
-	void setLogService(LogService logService) {
-		this.logService = logService;
 	}
 
 	void dispose() {
@@ -240,7 +267,9 @@ public class GlueManager {
 		for (Bindings methods : all) {
 			glueableContext.removeServiceListener(methods);
 			try {
-				methods.unbindMethod.invoke(glueable, methods.bound);
+				if (null != methods.unbindMethod) {
+					methods.unbindMethod.invoke(glueable, methods.bound);
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new RuntimeException(e);
@@ -250,6 +279,8 @@ public class GlueManager {
 	}
 
 	class Bindings implements ServiceListener {
+
+		private final String uid;
 
 		public Method bindMethod;
 
@@ -267,6 +298,8 @@ public class GlueManager {
 
 		public Bindings(String serviceName) {
 			this.serviceName = serviceName;
+			uid = UUID.randomUUID().toString();
+			logService.log(LogService.LOG_DEBUG, uid + " bindings created");
 		}
 
 		public void serviceChanged(ServiceEvent event) {
@@ -274,9 +307,10 @@ public class GlueManager {
 			String[] serviceNames = (String[]) event.getServiceReference()
 					.getProperty(Constants.OBJECTCLASS);
 
-			Set<String> names = new HashSet<String>();
-			Collections.addAll(names, serviceNames);
-			if (!names.contains(serviceName)) {
+			Collection<String> services = Arrays.asList(serviceNames);
+			logService.log(LogService.LOG_DEBUG, uid + " " + services);
+			if (!services.contains(serviceName)) {
+				logService.log(LogService.LOG_DEBUG, uid + " ignoring");
 				return;
 			}
 
@@ -291,11 +325,15 @@ public class GlueManager {
 					break;
 
 				case ServiceEvent.REGISTERED:
+					logService.log(LogService.LOG_DEBUG, uid
+							+ " handling REGISTERED");
 					serviceRegistered(glueableContext.getService(event
 							.getServiceReference()));
 					break;
 
 				case ServiceEvent.UNREGISTERING:
+					logService.log(LogService.LOG_DEBUG, uid
+							+ " handling UNREGISTERING");
 					serviceUnregistered(glueableContext.getService(event
 							.getServiceReference()));
 					break;
@@ -315,7 +353,11 @@ public class GlueManager {
 					doDeactivate();
 
 					// unbind
-					unbindMethod.invoke(glueable, services.toArray());
+					if (null != unbindMethod) {
+						logService.log(LogService.LOG_DEBUG, "Unbinding "
+								+ unbindMethod + services);
+						unbindMethod.invoke(glueable, services.toArray());
+					}
 				}
 
 				// add
@@ -357,7 +399,11 @@ public class GlueManager {
 					doDeactivate();
 
 					// unbind
-					unbindMethod.invoke(glueable, bound);
+					if (null != unbindMethod) {
+						logService.log(LogService.LOG_DEBUG, "Unbinding "
+								+ unbindMethod + services);
+						unbindMethod.invoke(glueable, bound);
+					}
 				}
 
 				// remove
@@ -371,6 +417,8 @@ public class GlueManager {
 
 					// check
 					check();
+				} else {
+					this.bound = null;
 				}
 
 			} else if (bound == o) {
@@ -379,7 +427,11 @@ public class GlueManager {
 					doDeactivate();
 
 					// unbind
-					unbindMethod.invoke(glueable, o);
+					if (null != unbindMethod) {
+						logService.log(LogService.LOG_DEBUG, "Unbinding "
+								+ unbindMethod + services);
+						unbindMethod.invoke(glueable, o);
+					}
 				}
 
 				// remove
@@ -393,6 +445,8 @@ public class GlueManager {
 
 					// check
 					check();
+				} else {
+					this.bound = null;
 				}
 			} else {
 				// remove

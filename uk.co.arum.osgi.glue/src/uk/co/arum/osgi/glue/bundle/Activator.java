@@ -1,9 +1,8 @@
 package uk.co.arum.osgi.glue.bundle;
 
+import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
@@ -11,8 +10,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleEvent;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.SynchronousBundleListener;
-import org.osgi.service.log.LogEntry;
-import org.osgi.service.log.LogReaderService;
 import org.osgi.service.log.LogService;
 import org.osgi.util.tracker.ServiceTracker;
 
@@ -34,23 +31,13 @@ public class Activator implements BundleActivator, SynchronousBundleListener {
 
 	private LogService logService;
 
-	private LogReaderService logReaderService;
-
-	// TODO disable/remove/configure this
-	private SimpleLogListener logListener = new SimpleLogListener();
+	private LogServiceDelegate logServiceDelegate = new LogServiceDelegate();
 
 	public void start(BundleContext context) throws Exception {
 
 		LogServiceTracker tracker = new LogServiceTracker(context);
 		logService = tracker;
 		tracker.open();
-
-		ServiceReference ref = context
-				.getServiceReference(LogReaderService.class.getName());
-		if (null != ref) {
-			logReaderService = (LogReaderService) context.getService(ref);
-			logReaderService.addLogListener(logListener);
-		}
 
 		managers = new HashMap<String, GlueManager>();
 
@@ -71,9 +58,6 @@ public class Activator implements BundleActivator, SynchronousBundleListener {
 	}
 
 	public void stop(BundleContext context) throws Exception {
-		if (null != logReaderService) {
-			logReaderService.removeLogListener(logListener);
-		}
 		context.removeBundleListener(this);
 
 		for (GlueManager mgr : managers.values()) {
@@ -135,8 +119,8 @@ public class Activator implements BundleActivator, SynchronousBundleListener {
 			Object o = c.newInstance();
 			Glueable g = (Glueable) o;
 
-			managers.put(className, new GlueManager(logService, g, bundle
-					.getBundleContext()));
+			managers.put(className, new GlueManager(logServiceDelegate, g,
+					bundle.getBundleContext()));
 		} catch (Throwable e) {
 			e.printStackTrace();
 		}
@@ -149,6 +133,36 @@ public class Activator implements BundleActivator, SynchronousBundleListener {
 		}
 	}
 
+	class LogServiceDelegate implements LogService {
+
+		public void log(int level, String message) {
+			// logService.log(level, message);
+			log(level, message, null);
+		}
+
+		public void log(int level, String message, Throwable exception) {
+			// logService.log(level, message, exception);
+			log(null, level, message, exception);
+		}
+
+		public void log(ServiceReference sr, int level, String message) {
+			// logService.log(sr, level, message);
+			log(sr, level, message, null);
+		}
+
+		public void log(ServiceReference sr, int level, String message,
+				Throwable exception) {
+			// logService.log(sr, level, message);
+			System.out.printf("--[%s] %d : [%s]%s", new Date(), level, message,
+					exception == null ? "" : exception.getMessage());
+			System.out.println();
+			if (null != exception) {
+				exception.printStackTrace();
+			}
+		}
+
+	}
+
 	class LogServiceTracker extends ServiceTracker implements LogService {
 
 		public LogServiceTracker(BundleContext context) {
@@ -158,26 +172,12 @@ public class Activator implements BundleActivator, SynchronousBundleListener {
 		@Override
 		public Object addingService(ServiceReference reference) {
 			logService = (LogService) context.getService(reference);
-			updateManagers();
 			return logService;
 		}
 
 		@Override
 		public void remove(ServiceReference reference) {
 			logService = this;
-			updateManagers();
-		}
-
-		private void updateManagers() {
-			if (null == Activator.this.managers) {
-				return;
-			}
-
-			Set<GlueManager> managers = new HashSet<GlueManager>();
-			managers.addAll(Activator.this.managers.values());
-			for (GlueManager mgr : managers) {
-				mgr.setLogService(logService);
-			}
 		}
 
 		public void log(int level, String message) {
@@ -189,58 +189,40 @@ public class Activator implements BundleActivator, SynchronousBundleListener {
 		}
 
 		public void log(ServiceReference sr, int level, String message) {
-			log(sr, level, message);
+			log(sr, level, message, null);
 		}
 
 		public void log(ServiceReference sr, int level, String message,
 				Throwable exception) {
-			logListener.logged(new SimpleLogEntry(null, level, message, sr));
+
+			String sLevel = null;
+			switch (level) {
+			case LogService.LOG_DEBUG:
+				sLevel = "DEBUG";
+				break;
+
+			case LogService.LOG_ERROR:
+				sLevel = "ERROR";
+				break;
+
+			case LogService.LOG_INFO:
+				sLevel = " INFO";
+				break;
+
+			case LogService.LOG_WARNING:
+				sLevel = " WARN";
+				break;
+
+			default:
+				sLevel = "?????";
+				break;
+			}
+
+			System.out.printf("[%14s] %s [%s] %s", new Date(), sLevel, message,
+					exception == null ? "" : "! [" + exception.getMessage()
+							+ "]");
+
 		}
-
-	}
-
-	class SimpleLogEntry implements LogEntry {
-
-		private final Throwable ex;
-		private final int level;
-		private final String message;
-		private final ServiceReference ref;
-		private final long time;
-
-		public SimpleLogEntry(Throwable ex, int level, String message,
-				ServiceReference ref) {
-			super();
-			this.ex = ex;
-			this.level = level;
-			this.message = message;
-			this.ref = ref;
-			this.time = System.currentTimeMillis();
-		}
-
-		public Bundle getBundle() {
-			return null;
-		}
-
-		public Throwable getException() {
-			return ex;
-		}
-
-		public int getLevel() {
-			return level;
-		}
-
-		public String getMessage() {
-			return message;
-		}
-
-		public ServiceReference getServiceReference() {
-			return ref;
-		}
-
-		public long getTime() {
-			return time;
-		}
-
 	}
 
 }

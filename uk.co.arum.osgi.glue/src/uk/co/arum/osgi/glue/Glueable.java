@@ -13,7 +13,7 @@ package uk.co.arum.osgi.glue;
  * all dependencies are satisfied the component is then considered activated.
  * 
  * <p/>
- * TODO optional (0..1) - services are bound using optionalBind (and unbound
+ * optional (0..1) - services are bound using optionalBind (and unbound
  * using optionalUnbind), otherwise bind must be used. e.g.
  * <p/>
  * <code><pre>

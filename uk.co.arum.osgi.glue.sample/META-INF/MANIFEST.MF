@@ -9,5 +9,5 @@ Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Import-Package: org.osgi.framework;version="1.3.0",
  org.osgi.service.http;version="1.2.0",
  org.osgi.service.log;version="1.3.0",
- uk.co.arum.osgi.glue
+ uk.co.arum.osgi.glue;version="1.0.0"
 Glueable-Component: uk.co.arum.osgi.glue.sample.bundle.GlueableSample

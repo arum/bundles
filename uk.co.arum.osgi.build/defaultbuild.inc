@@ -70,10 +70,10 @@
 	</osgijc>
 </target>
 
-<target name="build">
+<target name="build" if="module.version">
 
 	<osgibb basedir="${basedir}" destdir="${basedir}/dist" versionprop="bundle.version" />
-	<fail unless="bundle.version">bundle.version not specified.</fail>
+	<fail unless="module.version">module.version not specified.</fail>
 
 	<ivy:resolve />
 	<ivy:publish resolver="local" 

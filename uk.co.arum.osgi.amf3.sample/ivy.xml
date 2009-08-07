@@ -7,6 +7,10 @@
 		<artifact name="uk.co.arum.osgi.amf3.sample_1.0.0" ext="jar"/>
 	</publications>
 	<dependencies>
+		<dependency org="uk.org.brindy" name="uk.org.brindy.osgibb"
+			rev="1.0.5" />
+		<dependency org="uk.org.brindy" name="uk.org.brindy.osgijc"
+			rev="1.0.2" />
 		<dependency org="org.osgi" name="org.osgi.core" rev="4.1.0" />
 		<dependency org="org.osgi" name="org.osgi.compendium" rev="4.1.0" />
 		<dependency org="uk.co.arum" name="uk.co.arum.osgi.amf3" rev="1.0.1" />

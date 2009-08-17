@@ -2,10 +2,10 @@
 <!DOCTYPE project [
 <!ENTITY defaultbuild SYSTEM "../uk.co.arum.osgi.build/defaultbuild.inc">
 ]>
-<project name="uk.co.arum.osgi.glue" default="default" 
-		xmlns:ivy="antlib:org.apache.ivy.ant">
+<project name="uk.co.arum.osgi.log.sysout" default="default"
+	xmlns:ivy="antlib:org.apache.ivy.ant" >
 	
-	<property name="module.version" value="1.0.1" />
+	<property name="module.version" value="1.0.0" />
 	
 	&defaultbuild;
 	

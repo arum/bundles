@@ -1,6 +1,5 @@
 package uk.co.arum.osgi.glue.bundle;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,6 +30,8 @@ public class Activator implements BundleActivator, SynchronousBundleListener {
 
 	private LogService logService;
 
+	// passed to manager objects so that they can always call in to a
+	// log service with a valid reference
 	private LogServiceDelegate logServiceDelegate = new LogServiceDelegate();
 
 	public void start(BundleContext context) throws Exception {
@@ -75,17 +76,17 @@ public class Activator implements BundleActivator, SynchronousBundleListener {
 			for (String component : components) {
 				switch (event.getType()) {
 				case BundleEvent.STARTED:
-					System.out.println("Registering "
+					logService.log(LogService.LOG_INFO, "Registering "
 							+ event.getBundle().getSymbolicName() + "#"
 							+ component);
 					registerComponent(component, event.getBundle());
-					System.out.println("Finished registering "
+					logService.log(LogService.LOG_INFO, "Finished registering "
 							+ event.getBundle().getSymbolicName() + "#"
 							+ component);
 					break;
 
 				case BundleEvent.STOPPING:
-					System.out.println("Unregistering "
+					logService.log(LogService.LOG_INFO, "Unregistering "
 							+ event.getBundle().getSymbolicName() + "#"
 							+ component);
 					unregisterComponent(component, event.getBundle());
@@ -136,29 +137,20 @@ public class Activator implements BundleActivator, SynchronousBundleListener {
 	class LogServiceDelegate implements LogService {
 
 		public void log(int level, String message) {
-			// logService.log(level, message);
 			log(level, message, null);
 		}
 
 		public void log(int level, String message, Throwable exception) {
-			// logService.log(level, message, exception);
 			log(null, level, message, exception);
 		}
 
 		public void log(ServiceReference sr, int level, String message) {
-			// logService.log(sr, level, message);
 			log(sr, level, message, null);
 		}
 
 		public void log(ServiceReference sr, int level, String message,
 				Throwable exception) {
-			// logService.log(sr, level, message);
-			System.out.printf("--[%s] %d : [%s]%s", new Date(), level, message,
-					exception == null ? "" : exception.getMessage());
-			System.out.println();
-			if (null != exception) {
-				exception.printStackTrace();
-			}
+			logService.log(sr, level, message);
 		}
 
 	}
@@ -181,47 +173,16 @@ public class Activator implements BundleActivator, SynchronousBundleListener {
 		}
 
 		public void log(int level, String message) {
-			log(level, message, null);
 		}
 
 		public void log(int level, String message, Throwable exception) {
-			log(null, level, message);
 		}
 
 		public void log(ServiceReference sr, int level, String message) {
-			log(sr, level, message, null);
 		}
 
 		public void log(ServiceReference sr, int level, String message,
 				Throwable exception) {
-
-			String sLevel = null;
-			switch (level) {
-			case LogService.LOG_DEBUG:
-				sLevel = "DEBUG";
-				break;
-
-			case LogService.LOG_ERROR:
-				sLevel = "ERROR";
-				break;
-
-			case LogService.LOG_INFO:
-				sLevel = " INFO";
-				break;
-
-			case LogService.LOG_WARNING:
-				sLevel = " WARN";
-				break;
-
-			default:
-				sLevel = "?????";
-				break;
-			}
-
-			System.out.printf("[%14s] %s [%s] %s", new Date(), sLevel, message,
-					exception == null ? "" : "! [" + exception.getMessage()
-							+ "]");
-
 		}
 	}
 

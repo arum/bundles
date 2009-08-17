@@ -9,8 +9,8 @@
 	<target name="default" depends="clean">
 
 		<!-- build all the bundles -->
+		<ant dir="../uk.co.arum.osgi.log.sysout" target="complete" />
 		<ant dir="../uk.co.arum.osgi.glue" target="complete" />
-
 		<ant dir="../uk.co.arum.osgi.glue.sample" target="complete" />
 		<ant dir="../uk.co.arum.osgi.amf3" target="complete" />
 		<ant dir="../uk.co.arum.osgi.amf3.flex.remoting" target="complete" />

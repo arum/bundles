@@ -81,6 +81,13 @@ public class GlueManager {
 			}
 
 		}
+
+		// might be that this class doesn't require any bindings,
+		// so check to be sure
+		if (!active) {
+			check();
+		}
+
 	}
 
 	private void extractBindings(Glueable glueable, String bindMethodName,

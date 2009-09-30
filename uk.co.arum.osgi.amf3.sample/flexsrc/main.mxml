@@ -1,32 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
 
-/*
-  uk.co.arum.osgi.amf3.sample 
-  
-  Copyright (C) 2008 - 2009 Arum Systems Ltd
+	 /*
+	 uk.co.arum.osgi.amf3.sample
 
-  This file is part of the uk.co.arum.osgi.amf3.sample bundle.
+	 Copyright (C) 2008 - 2009 Arum Systems Ltd
 
-  uk.co.arum.osgi.amf3.sample is free software; you can redistribute it and/or modify
-  it under the terms of the GNU Lesser General Public License as published by
-  the Free Software Foundation; either version 3 of the License, or (at your
-  option) any later version.
+	 This file is part of the uk.co.arum.osgi.amf3.sample bundle.
 
-  uk.co.arum.osgi.amf3.sample is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
-  for more details.
+	 uk.co.arum.osgi.amf3.sample is free software; you can redistribute it and/or modify
+	 it under the terms of the GNU Lesser General Public License as published by
+	 the Free Software Foundation; either version 3 of the License, or (at your
+	 option) any later version.
 
-  You should have received a copy of the GNU Lesser General Public License
-  along with this library; if not, see <http://www.gnu.org/licenses/>.
- */
+	 uk.co.arum.osgi.amf3.sample is distributed in the hope that it will be useful, but
+	 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+	 FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
+	 for more details.
+
+	 You should have received a copy of the GNU Lesser General Public License
+	 along with this library; if not, see <http://www.gnu.org/licenses/>.
+	 */
 
 
 -->
-<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="vertical"
-		implements="mx.rpc.IResponder"
-		creationComplete="onCreationComplete(event)">
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
+				layout="vertical"
+				implements="mx.rpc.IResponder"
+				creationComplete="onCreationComplete(event)">
 
 	<mx:Script>
 		<![CDATA[
@@ -42,130 +43,210 @@
 			import mx.messaging.ChannelSet;
 			import uk.co.arum.osgi.amf3.sample.VerySimpleObject;
 			import uk.co.arum.osgi.amf3.sample.SampleObject;
-			
+
 			private var sample:SampleObject;
-			
+
 			private var simple:VerySimpleObject;
-			
-			private function onCreationComplete(event:Event) : void {
-				simple = createVerySimpleObject("very simple");
+
+			private function onCreationComplete(event:Event):void
+			{
+				simpleService.setRemoteCredentials("remotecredentials", "12345");
 				
-				sample = createSampleObject("sample object", null, 1024);
-				var child1:SampleObject = createSampleObject("child 1", sample, 22);
-				var child2:SampleObject = createSampleObject("child 2", sample, 65);
-				var child3:SampleObject = createSampleObject("child 3", sample, 65);
-				var child2_1:SampleObject = createSampleObject("child 2.1", child2, 2011);
-				
-				var cs:ChannelSet = new ChannelSet();
-				var channel:Channel = new AMFChannel("events", "/amf3osgi");
+				simple=createVerySimpleObject("very simple");
+
+				sample=createSampleObject("sample object", null, 1024);
+				var child1:SampleObject=createSampleObject("child 1", sample, 22);
+				var child2:SampleObject=createSampleObject("child 2", sample, 65);
+				var child3:SampleObject=createSampleObject("child 3", sample, 65);
+				var child2_1:SampleObject=createSampleObject("child 2.1", child2, 2011);
+
+				var cs:ChannelSet=new ChannelSet();
+				var channel:Channel=new AMFChannel("events", "/amf3osgi");
 				cs.addChannel(channel);
-				consumer.channelSet = cs;
+				consumer.channelSet=cs;
 				consumer.subscribe();
-				
-				producer.channelSet = cs;
+
+				producer.channelSet=cs;
 				producer.send(createAsyncMessage());
 			}
-			
-			private function createVerySimpleObject(name:String) : VerySimpleObject {
-				var vso:VerySimpleObject = new VerySimpleObject();
-				vso.name = name;
+
+			private function createVerySimpleObject(name:String):VerySimpleObject
+			{
+				var vso:VerySimpleObject=new VerySimpleObject();
+				vso.name=name;
 				return vso;
 			}
-			
-			private function createSampleObject(name:String, parent:SampleObject, value:Number) : SampleObject {
-				var sample:SampleObject = new SampleObject();
-				
-				sample.parent = parent;
-				if (sample.parent) {
-					if (!sample.parent.children) {
-						sample.parent.children = new ArrayCollection();
+
+			private function createSampleObject(name:String, parent:SampleObject, value:Number):SampleObject
+			{
+				var sample:SampleObject=new SampleObject();
+
+				sample.parent=parent;
+				if (sample.parent)
+				{
+					if (!sample.parent.children)
+					{
+						sample.parent.children=new ArrayCollection();
 					}
 					sample.parent.children.addItem(sample);
 				}
-				
-				sample.name = name;
-				sample.value = value;
+
+				sample.name=name;
+				sample.value=value;
 				return sample;
 			}
-			
-			private function createAsyncMessage(text:String = "Hello") : AsyncMessage {
-				var async:AsyncMessage = new AsyncMessage();
-				async.destination = "events";
-				async.body = {"Say":text};
+
+			private function createAsyncMessage(text:String="Hello"):AsyncMessage
+			{
+				var async:AsyncMessage=new AsyncMessage();
+				async.destination="events";
+				async.body={"Say":text};
 				return async;
 			}
-			
-			private function onFault(event:Event) : void {
+
+			private function onFault(event:Event):void
+			{
 				Alert.show(event.toString());
 			}
-			
-			private function onResult(event:ResultEvent) : void {
-				textArea.text = event.toString() + "\n" + textArea.text;
-				textArea.text = event.result.toString() + "\n" + textArea.text;
+
+			private function onResult(event:ResultEvent):void
+			{
+				textArea.text=event.toString() + "\n" + textArea.text;
+				textArea.text=event.result.toString() + "\n" + textArea.text;
 			}
-		
-			public function fault(o:Object) : void {
+
+			public function fault(o:Object):void
+			{
 				onFault(FaultEvent(o));
 			}
-			
-			public function result(o:Object) : void {
+
+			public function result(o:Object):void
+			{
 				onResult(ResultEvent(o));
 			}
-			
-			private function onClickSendButton(event:Event) : void {
+
+			private function onClickSendButton(event:Event):void
+			{
 				producer.send(createAsyncMessage(textInput.text));
 			}
-			
-			private function onConsumerMessage(event:MessageEvent) : void {
-				messagesArea.text = event.toString() + "\n" + messagesArea.text;
-				messagesArea.text = event.message.body.Say + "\n" + messagesArea.text;
+
+			private function onConsumerMessage(event:MessageEvent):void
+			{
+				messagesArea.text=event.toString() + "\n" + messagesArea.text;
+				messagesArea.text=event.message.body.Say + "\n" + messagesArea.text;
 			}
-			
 		]]>
 	</mx:Script>
-	
-	<mx:Consumer id="consumer" message="onConsumerMessage(event)" destination="events" fault="onFault(event)"/>
-	
-	<mx:Producer id="producer" destination="events" fault="onFault(event)" />
 
-	<mx:RemoteObject id="simpleService" endpoint="/amf3osgi" destination="uk.co.arum.osgi.amf3.sample.SimpleService">	
-		<mx:method id="echoMethod" name="echo" result="onResult(event)" fault="onFault(event)" />
-		<mx:method id="reverseMethod" name="reverse" result="onResult(event)" fault="onFault(event)" />
-		<mx:method id="randomMethod" name="random" result="onResult(event)" fault="onFault(event)" />
-		<mx:method id="getSampleObjectMethod" name="getSampleObject" result="onResult(event)" fault="onFault(event)" />
-		<mx:method id="sendVerySimpleObjectMethod" name="sendVerySimpleObject" result="onResult(event)" fault="onFault(event)" />
-		<mx:method id="sendSampleObjectMethod" name="sendSampleObject" result="onResult(event)" fault="onFault(event)" />
-		<mx:method id="throwExceptionMethod" name="throwException" result="onResult(event)" fault="onFault(event)" />
+	<mx:Consumer id="consumer"
+				 message="onConsumerMessage(event)"
+				 destination="events"
+				 fault="onFault(event)"/>
+
+	<mx:Producer id="producer"
+				 destination="events"
+				 fault="onFault(event)"/>
+
+	<mx:RemoteObject id="simpleService"
+					 endpoint="/amf3osgi"
+					 destination="uk.co.arum.osgi.amf3.sample.SimpleService"
+					 >
+		<mx:method id="echoMethod"
+				   name="echo"
+				   result="onResult(event)"
+				   fault="onFault(event)"/>
+		<mx:method id="reverseMethod"
+				   name="reverse"
+				   result="onResult(event)"
+				   fault="onFault(event)"/>
+		<mx:method id="randomMethod"
+				   name="random"
+				   result="onResult(event)"
+				   fault="onFault(event)"/>
+		<mx:method id="getSampleObjectMethod"
+				   name="getSampleObject"
+				   result="onResult(event)"
+				   fault="onFault(event)"/>
+		<mx:method id="sendVerySimpleObjectMethod"
+				   name="sendVerySimpleObject"
+				   result="onResult(event)"
+				   fault="onFault(event)"/>
+		<mx:method id="sendSampleObjectMethod"
+				   name="sendSampleObject"
+				   result="onResult(event)"
+				   fault="onFault(event)"/>
+		<mx:method id="throwExceptionMethod"
+				   name="throwException"
+				   result="onResult(event)"
+				   fault="onFault(event)"/>
 	</mx:RemoteObject>
-	
-	<mx:HBox width="100%" defaultButton="{echoButton}">
-		<mx:Label text="Enter Your Text:" />
-		<mx:TextInput id="textInput" width="100%" />
-		<mx:Button id="echoButton" label="Echo" click="simpleService.echo(textInput.text)" enabled="{StringUtil.trim(textInput.text).length > 0}" />
-		<mx:Button id="reverseButton" label="Reverse" click="simpleService.reverse(textInput.text)" enabled="{StringUtil.trim(textInput.text).length > 0}" />
-		<mx:Button id="sendButton" label="Send" click="onClickSendButton(event)" toolTip="Send text as a message" enabled="{StringUtil.trim(textInput.text).length > 0}" />
-		<mx:Button id="exceptionButton" label="Exception" click="simpleService.throwException(textInput.text)" toolTip="Have the server thrown an exception with the given message" enabled="{StringUtil.trim(textInput.text).length > 0}" />
+
+	<mx:HBox width="100%"
+			 defaultButton="{echoButton}">
+		<mx:Label text="Enter Your Text:"/>
+		<mx:TextInput id="textInput"
+					  width="100%"/>
+		<mx:Button id="echoButton"
+				   label="Echo"
+				   click="simpleService.echo(textInput.text)"
+				   enabled="{StringUtil.trim(textInput.text).length > 0}"/>
+		<mx:Button id="reverseButton"
+				   label="Reverse"
+				   click="simpleService.reverse(textInput.text)"
+				   enabled="{StringUtil.trim(textInput.text).length > 0}"/>
+		<mx:Button id="sendButton"
+				   label="Send"
+				   click="onClickSendButton(event)"
+				   toolTip="Send text as a message"
+				   enabled="{StringUtil.trim(textInput.text).length > 0}"/>
+		<mx:Button id="exceptionButton"
+				   label="Exception"
+				   click="simpleService.throwException(textInput.text)"
+				   toolTip="Have the server thrown an exception with the given message"
+				   enabled="{StringUtil.trim(textInput.text).length > 0}"/>
 	</mx:HBox>
 
 	<mx:HBox width="100%">
-		<mx:Button id="randomButton" label="Get Random Number" click="simpleService.random()" toolTip="Have the server generate a random number"/>
-		<mx:Button id="getSampleObjectButton" label="Get Sample Object" click="simpleService.getSampleObject()" toolTip="Have the server retrieve a sample object instance"/>
-		<mx:Button id="sendVerySimpleObjectButton" label="Send Very Simple Object" click="simpleService.sendVerySimpleObject(simple)" toolTip="Send a simple object"/>
-		<mx:Button id="sendSampleObjectButton" label="Send Sample Object" click="simpleService.sendSampleObject(sample)" toolTip="Send and retrieve a more complicated sample object"/>
+		<mx:Button id="randomButton"
+				   label="Get Random Number"
+				   click="simpleService.random()"
+				   toolTip="Have the server generate a random number"/>
+		<mx:Button id="getSampleObjectButton"
+				   label="Get Sample Object"
+				   click="simpleService.getSampleObject()"
+				   toolTip="Have the server retrieve a sample object instance"/>
+		<mx:Button id="sendVerySimpleObjectButton"
+				   label="Send Very Simple Object"
+				   click="simpleService.sendVerySimpleObject(simple)"
+				   toolTip="Send a simple object"/>
+		<mx:Button id="sendSampleObjectButton"
+				   label="Send Sample Object"
+				   click="simpleService.sendSampleObject(sample)"
+				   toolTip="Send and retrieve a more complicated sample object"/>
 	</mx:HBox>
-	
-	<mx:HBox width="100%" height="100%">
-		<mx:Panel title="Output from remote methods" width="100%" height="100%" >
-			<mx:TextArea id="textArea" width="100%" height="100%" />
+
+	<mx:HBox width="100%"
+			 height="100%">
+		<mx:Panel title="Output from remote methods"
+				  width="100%"
+				  height="100%">
+			<mx:TextArea id="textArea"
+						 width="100%"
+						 height="100%"/>
 		</mx:Panel>
-		<mx:Panel title="Messages" width="100%" height="100%" >
-			<mx:TextArea id="messagesArea" width="100%" height="100%" />
+		<mx:Panel title="Messages"
+				  width="100%"
+				  height="100%">
+			<mx:TextArea id="messagesArea"
+						 width="100%"
+						 height="100%"/>
 		</mx:Panel>
 	</mx:HBox>
-	
+
 	<mx:HBox width="100%">
-		<mx:Spacer width="100%" />
-		<mx:Button label="Clear" click="textArea.text = ''" />
+		<mx:Spacer width="100%"/>
+		<mx:Button label="Clear"
+				   click="textArea.text = ''"/>
 	</mx:HBox>
 
 </mx:Application>

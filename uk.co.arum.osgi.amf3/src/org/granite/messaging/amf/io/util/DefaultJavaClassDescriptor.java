@@ -58,8 +58,8 @@ public class DefaultJavaClassDescriptor extends JavaClassDescriptor {
 				for (PropertyDescriptor property : info
 						.getPropertyDescriptors()) {
 					String propertyName = property.getName();
-					if (property.getWriteMethod() != null
-							&& property.getReadMethod() != null) {
+					if (/*property.getWriteMethod() != null*
+							&&*/ property.getReadMethod() != null && !property.getPropertyType().equals(Class.class)) {
 						properties.add(new MethodProperty(propertyName,
 								property.getWriteMethod(), property
 										.getReadMethod()));
@@ -77,6 +77,11 @@ public class DefaultJavaClassDescriptor extends JavaClassDescriptor {
 						properties.add(new FieldProperty(field));
 						propertyNames.add(propertyName);
 					}
+				}
+				
+				if (Enum.class.isAssignableFrom(type)) {
+					properties.add(new MethodProperty("name", null, type.getMethod("name")));
+					propertyNames.add("name");
 				}
 			} catch (RuntimeException e) {
 				throw e;

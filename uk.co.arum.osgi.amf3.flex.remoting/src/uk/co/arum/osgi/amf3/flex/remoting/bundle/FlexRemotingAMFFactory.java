@@ -32,6 +32,7 @@ import java.util.UUID;
 import org.osgi.service.log.LogService;
 
 import uk.co.arum.osgi.amf3.AMFFactory;
+import uk.co.arum.osgi.amf3.flex.remoting.RemotingContext;
 import uk.co.arum.osgi.amf3.flex.remoting.events.PublishedObjectEvent;
 import flex.messaging.messages.AcknowledgeMessage;
 import flex.messaging.messages.AsyncMessage;
@@ -263,7 +264,10 @@ public class FlexRemotingAMFFactory implements AMFFactory {
 		if (null != opargs) {
 			int i = 0;
 			for (Object arg : opargs) {
-				opargsClasses[i++] = arg.getClass();
+				if (null != arg) {
+					opargsClasses[i] = arg.getClass();
+				}
+				i++;
 			}
 		}
 
@@ -277,12 +281,8 @@ public class FlexRemotingAMFFactory implements AMFFactory {
 				// is there an operation on this class that matches requested
 				// operation?
 				if (null != serviceClass) {
-					try {
-						method = serviceClass.getMethod(
-								remoting.getOperation(), opargsClasses);
-					} catch (NoSuchMethodException e) {
-						// could happen
-					}
+					method = findMethod(serviceClass, remoting.getOperation(),
+							opargsClasses, opargs);
 				}
 
 			} catch (ClassNotFoundException e) {
@@ -297,23 +297,78 @@ public class FlexRemotingAMFFactory implements AMFFactory {
 					.getOperation()));
 		}
 
-		// TODO add security hooks in case a bundle wants to prevent access to
-		// this service for some reason
-
 		// if the same operation exists on the actual service class, invoke it
-		try {
-			method = serviceConfig.getService().getClass().getMethod(
-					remoting.getOperation(), opargsClasses);
-		} catch (NoSuchMethodException e) {
-			return e;
+		if (null == (method = findMethod(serviceConfig.getService().getClass(),
+				remoting.getOperation(), opargsClasses, opargs))) {
+			throw new RuntimeException(new NoSuchMethodException(remoting
+					.getOperation()));
 		}
 
 		try {
-			return method.invoke(serviceConfig.getService(),
+			new RemotingContext(remoting);
+			Object returnValue = method.invoke(serviceConfig.getService(),
 					(Object[]) remoting.getBody());
+			return config.translate(returnValue);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private boolean compareArgList(Class[] methodArgs, Class[] requiredArgs,
+			Object[] args) {
+
+		if (methodArgs.length != requiredArgs.length) {
+			return false;
+		}
+
+		for (int i = 0; i < methodArgs.length; i++) {
+
+			if (null == requiredArgs[i]
+					|| methodArgs[i].isAssignableFrom(requiredArgs[i])
+					|| isAssignable(methodArgs[i], requiredArgs[i], args[i])) {
+				continue;
+			}
+
+			return false;
+		}
+
+		return true;
+	}
+
+	@SuppressWarnings("unchecked")
+	private boolean isAssignable(Class methodArgType, Class requiredArgType,
+			Object arg) {
+
+		try {
+			requiredArgType.cast(arg);
+		} catch (ClassCastException e) {
+			return false;
+		}
+
+		return true;
+	}
+
+	@SuppressWarnings("unchecked")
+	private Method findMethod(Class c, String name, Class[] argTypes,
+			Object[] args) {
+		Method method = null;
+		try {
+			method = c.getDeclaredMethod(name, argTypes);
+		} catch (NoSuchMethodException e) {
+			// could happen
+			for (Method xMethod : c.getDeclaredMethods()) {
+				if (xMethod.getName().equals(name)) {
+					if (compareArgList(xMethod.getParameterTypes(), argTypes,
+							args)) {
+						method = xMethod;
+					}
+				}
+			}
+
+		}
+
+		return method;
 	}
 
 	private Object processPublishMessage(Object incoming) {

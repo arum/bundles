@@ -84,18 +84,19 @@ public class GlueManager {
 
 		// might be that this class doesn't require any bindings,
 		// so check to be sure
-		if (!active) {
+		if (!active && allBindings.size() == 0) {
 			check();
 		}
 
 	}
 
-	private void extractBindings(Glueable glueable, String bindMethodName,
-			String unbindMethodName, Map<String, Bindings> bindingMethods) {
+	private void extractBindings(Glueable glueable, String bindMethodPrefix,
+			String unbindMethodPrefix, Map<String, Bindings> bindingMethods) {
 
 		Method[] methods = glueable.getClass().getMethods();
 		for (Method bindMethod : methods) {
-			if (bindMethod.getName().startsWith(bindMethodName)
+			if (bindMethod.getName().startsWith(bindMethodPrefix)
+					&& !bindMethod.getName().equals("bindContext")
 					&& bindMethod.getParameterTypes().length == 1) {
 
 				Bindings bindings;
@@ -111,12 +112,12 @@ public class GlueManager {
 
 				// look for the extra part to the binding name
 				String extra = "";
-				if (!bindMethod.getName().equals(bindMethodName)) {
+				if (!bindMethod.getName().equals(bindMethodPrefix)) {
 					extra = bindMethod.getName().substring(
-							bindMethodName.length());
+							bindMethodPrefix.length());
 				}
 
-				String actualUnbindMethodName = unbindMethodName + extra;
+				String actualUnbindMethodName = unbindMethodPrefix + extra;
 				try {
 					bindings.unbindMethod = glueable.getClass().getMethod(
 							actualUnbindMethodName, paramType);
@@ -128,7 +129,7 @@ public class GlueManager {
 				// developer to decide
 				if (null == bindings.unbindMethod) {
 					logService.log(LogService.LOG_INFO, "No matching "
-							+ unbindMethodName + " method found #"
+							+ unbindMethodPrefix + " method found #"
 							+ actualUnbindMethodName + "("
 							+ paramType.getName() + ")");
 				}

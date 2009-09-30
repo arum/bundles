@@ -49,8 +49,6 @@ public class MethodProperty extends Property {
 	public void setProperty(Object instance, Object value, boolean convert) {
 
 		/*
-		 * FIXME review
-		 * 
 		 * Basically, what is happening here is that if a property that is
 		 * supposedly an AMF Object is being set to null, it is coming through
 		 * as a type 0x9 element (array) with a single null value, rather than a

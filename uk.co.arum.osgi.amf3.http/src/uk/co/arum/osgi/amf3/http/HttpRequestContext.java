@@ -26,6 +26,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 public class HttpRequestContext {
 
@@ -55,6 +56,15 @@ public class HttpRequestContext {
 
 	public HttpServletResponse getResponse() {
 		return response;
+	}
+
+	/**
+	 * Get the current http session, creating a new one if necessary.
+	 * 
+	 * @return the http session
+	 */
+	public HttpSession getSession() {
+		return request.getSession(true);
 	}
 
 	/**

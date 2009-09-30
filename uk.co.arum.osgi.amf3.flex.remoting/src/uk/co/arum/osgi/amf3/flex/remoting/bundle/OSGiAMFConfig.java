@@ -29,9 +29,11 @@ import java.util.Set;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
 import uk.co.arum.osgi.amf3.flex.remoting.OSGiAMFConstants;
+import uk.co.arum.osgi.amf3.flex.remoting.Translator;
 
 public class OSGiAMFConfig {
 
@@ -47,7 +49,8 @@ public class OSGiAMFConfig {
 
 	/**
 	 * Load the class with the given name from the bundles that have registered
-	 * a service.<p/>
+	 * a service.
+	 * <p/>
 	 * 
 	 * TODO cache the class, but uncache if associated service disappears
 	 * 
@@ -131,6 +134,35 @@ public class OSGiAMFConfig {
 
 	public void dispose() {
 		configs.clear();
+	}
+
+	public Object translate(Object from) {
+
+		if (null == from || from instanceof Void) {
+			return from;
+		}
+
+		ServiceReference[] refs = null;
+
+		try {
+			refs = context.getServiceReferences(Translator.class.getName(),
+					null);
+		} catch (InvalidSyntaxException e) {
+			throw new RuntimeException(e);
+		}
+
+		for (ServiceReference ref : refs) {
+			Translator t = (Translator) context.getService(ref);
+			try {
+				if (t.canTranslate(from)) {
+					return t.translate(from);
+				}
+			} finally {
+				context.ungetService(ref);
+			}
+		}
+
+		return from;
 	}
 
 }

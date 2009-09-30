@@ -25,6 +25,7 @@ import java.util.Enumeration;
 
 import javax.servlet.http.HttpServletRequest;
 
+import uk.co.arum.osgi.amf3.flex.remoting.RemotingContext;
 import uk.co.arum.osgi.amf3.http.HttpRequestContext;
 import uk.co.arum.osgi.amf3.sample.SampleObject;
 import uk.co.arum.osgi.amf3.sample.SimpleService;
@@ -98,6 +99,10 @@ public class SimpleServiceImpl implements SimpleService {
 				.getRequest();
 
 		System.out.println("Method: " + request.getMethod());
+
+		System.out.println("Credentials: "
+				+ RemotingContext.getCurrent().getMessage().getHeader(
+						"DSRemoteCredentials"));
 
 		boolean headers = false;
 		System.out.println("Headers: ");

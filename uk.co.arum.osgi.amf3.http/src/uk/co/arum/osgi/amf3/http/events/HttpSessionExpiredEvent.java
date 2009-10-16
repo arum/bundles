@@ -21,6 +21,8 @@
 
 package uk.co.arum.osgi.amf3.http.events;
 
+import java.util.Dictionary;
+
 import org.osgi.service.event.Event;
 
 import uk.co.arum.osgi.amf3.http.HttpRequestContext;
@@ -39,7 +41,7 @@ public class HttpSessionExpiredEvent extends Event {
 	 *            the request context
 	 */
 	public HttpSessionExpiredEvent(HttpRequestContext context) {
-		super(TOPIC, null);
+		super(TOPIC, (Dictionary) null);
 		this.context = context;
 	}
 

@@ -28,12 +28,15 @@ import java.util.UUID;
 import org.osgi.service.event.Event;
 
 /**
- * A published object event. If source id has been set, it is assume this object
- * was published from a Flex client. Bundles are free to dispatch this event in
- * order to send objects to Flex clients subscribed to the specified channels
- * and topics, but should specify null for the source id.
+ * A published object event.
  * <p/>
- * 
+ * If source id has been set, it is assumed this object was published from a
+ * Flex client.
+ * <p/>
+ * On the server, bundles are free to dispatch this event in order to send
+ * objects to Flex clients subscribed to the specified channels and topics, but
+ * should specify null for the source id.
+ * <p/>
  * Likewise, bundles can listen for this event, filtering on the appropriate
  * properties if desired in order to handle messages from Flex clients.
  * </p>

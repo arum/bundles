@@ -4,7 +4,7 @@
 	xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd">
 	<info organisation="uk.co.arum" module="uk.co.arum.osgi.amf3.flex.remoting" />
 	<publications>
-		<artifact name="uk.co.arum.osgi.amf3.flex.remoting_1.0.1" ext="jar"/>
+		<artifact name="uk.co.arum.osgi.amf3.flex.remoting_1.0.2" ext="jar"/>
 	</publications>
 	<dependencies>
 		<dependency org="uk.org.brindy" name="uk.org.brindy.osgibb"
@@ -14,5 +14,6 @@
 		<dependency org="org.osgi" name="org.osgi.core" rev="4.1.0" />
 		<dependency org="org.osgi" name="org.osgi.compendium" rev="4.1.0" />
 		<dependency org="uk.co.arum" name="uk.co.arum.osgi.amf3" rev="1.0.1" />
+		<dependency org="uk.co.arum" name="uk.co.arum.osgi.glue" rev="1.0.0" />
 	</dependencies>
 </ivy-module>

@@ -41,7 +41,7 @@ public class HttpSessionExpiredEvent extends Event {
 	 *            the request context
 	 */
 	public HttpSessionExpiredEvent(HttpRequestContext context) {
-		super(TOPIC, (Dictionary) null);
+		super(TOPIC, (Dictionary<?, ?>) null);
 		this.context = context;
 	}
 

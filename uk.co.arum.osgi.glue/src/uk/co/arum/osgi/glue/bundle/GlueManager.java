@@ -1,5 +1,6 @@
 package uk.co.arum.osgi.glue.bundle;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
@@ -105,8 +106,12 @@ public class GlueManager {
 					bindings = new Bindings(paramType.getComponentType()
 							.getName());
 					bindings.multiple = true;
+					System.out.println("creating array binding "
+							+ paramType.getComponentType().getName() + "[]");
 				} else {
 					bindings = new Bindings(paramType.getName());
+					System.out.println("creating binding "
+							+ paramType.getName());
 				}
 				bindings.bindMethod = bindMethod;
 
@@ -307,7 +312,8 @@ public class GlueManager {
 		public Bindings(String serviceName) {
 			this.serviceName = serviceName;
 			uid = UUID.randomUUID().toString();
-			logService.log(LogService.LOG_DEBUG, uid + " bindings created");
+			logService.log(LogService.LOG_DEBUG, uid + " " + serviceName
+					+ " bindings created for " + bound);
 		}
 
 		public void serviceChanged(ServiceEvent event) {
@@ -372,10 +378,20 @@ public class GlueManager {
 				services.add(o);
 
 				// rebind
-				Object bound = services.toArray();
+				Class<?> t = getArrayClass(services.iterator().next());
+				Object array = Array.newInstance(t, services.size());
 
-				bindMethod.invoke(glueable, new Object[] { bound });
-				this.bound = bound;
+				// Object bound = services.toArray();
+				int i = 0;
+				for (Object value : services) {
+					Array.set(array, i++, value);
+				}
+
+				System.out.println("invoking " + bindMethod.getDeclaringClass()
+						+ "#bind(" + t + "[])");
+				bindMethod.invoke(glueable, new Object[] { array });
+
+				this.bound = array;
 
 				// check
 				check();
@@ -397,6 +413,20 @@ public class GlueManager {
 
 			}
 
+		}
+
+		Class<?> getArrayClass(Object o) {
+			System.out.println("Looking for " + serviceName);
+
+			Class<?>[] at = o.getClass().getInterfaces();
+			for (Class<?> i : at) {
+				if (i.getName().equals(serviceName)) {
+					return i;
+				}
+			}
+
+			throw new RuntimeException("Unable to find class " + serviceName
+					+ " in " + o);
 		}
 
 		void serviceUnregistered(Object o) throws Exception {

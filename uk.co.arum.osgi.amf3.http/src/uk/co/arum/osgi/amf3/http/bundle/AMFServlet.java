@@ -33,6 +33,7 @@ import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
 
 import org.osgi.service.event.EventAdmin;
+import org.osgi.service.http.HttpService;
 import org.osgi.service.log.LogService;
 
 import uk.co.arum.osgi.amf3.AMFFactory;
@@ -41,27 +42,62 @@ import uk.co.arum.osgi.amf3.http.HttpRequestContext;
 import uk.co.arum.osgi.amf3.http.events.HttpSessionCreatedEvent;
 import uk.co.arum.osgi.amf3.http.events.HttpSessionExpiredEvent;
 import uk.co.arum.osgi.amf3.io.AMFProcessor;
+import uk.co.arum.osgi.glue.Activatable;
+import uk.co.arum.osgi.glue.Glueable;
 
-public class AMFServlet extends HttpServlet {
+public class AMFServlet extends HttpServlet implements Glueable, Activatable {
+
+	private static final String ALIAS_OSGIAMF = "/amf3osgi";
 
 	private static final long serialVersionUID = 1L;
 
-	private final AMFProcessor processor;
+	private CompoundAMFFactory compoundFactory;
+
+	private AMFProcessor processor;
+
+	private HttpService httpService;
 
 	private EventAdmin eventAdmin;
 
 	private LogService logService;
 
-	public AMFServlet(AMFFactory factory) {
-		this.processor = new AMFProcessor(factory);
+	public AMFServlet() {
 	}
 
-	public void setEventAdmin(EventAdmin eventAdmin) {
+	public void bind(HttpService httpService) {
+		this.httpService = httpService;
+	}
+
+	public void bind(EventAdmin eventAdmin) {
 		this.eventAdmin = eventAdmin;
 	}
 
-	public void setLogService(LogService logService) {
+	public void bind(LogService logService) {
 		this.logService = logService;
+	}
+
+	public void bind(AMFFactory[] factories) {
+		compoundFactory = new CompoundAMFFactory();
+		for (AMFFactory factory : factories) {
+			compoundFactory.add(factory);
+		}
+	}
+
+	public void unbind(AMFFactory[] factories) {
+		for (AMFFactory factory : factories) {
+			compoundFactory.remove(factory);
+		}
+		compoundFactory = null;
+	}
+
+	public void activate() throws Exception {
+		processor = new AMFProcessor(compoundFactory);
+		httpService.registerServlet(ALIAS_OSGIAMF, this, null, null);
+	}
+
+	public void deactivate() throws Exception {
+		httpService.unregister(ALIAS_OSGIAMF);
+		processor = null;
 	}
 
 	@Override
@@ -122,4 +158,7 @@ public class AMFServlet extends HttpServlet {
 		response.getOutputStream().write(outBytes.toByteArray());
 	}
 
+	public String getServiceFilter(String serviceName, String name) {
+		return null;
+	}
 }

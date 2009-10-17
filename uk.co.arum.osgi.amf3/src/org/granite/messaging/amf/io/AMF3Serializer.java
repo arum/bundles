@@ -16,7 +16,7 @@
 
   You should have received a copy of the GNU Lesser General Public License
   along with this library; if not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 package org.granite.messaging.amf.io;
 
@@ -95,7 +95,7 @@ public class AMF3Serializer extends DataOutputStream implements ObjectOutput,
 				writeAMF3Date(((Calendar) o).getTime());
 			} else if (o instanceof Document) {
 				writeAMF3Xml((Document) o);
-			} else if (o instanceof Collection) {
+			} else if (o instanceof Collection<?>) {
 				writeAMF3Collection((Collection<?>) o);
 			} else if (o.getClass().isArray()) {
 				if (o.getClass().getComponentType() == Byte.TYPE) {

@@ -151,14 +151,16 @@ public class OSGiAMFConfig {
 			throw new RuntimeException(e);
 		}
 
-		for (ServiceReference ref : refs) {
-			Translator t = (Translator) context.getService(ref);
-			try {
-				if (t.canTranslate(from)) {
-					return t.translate(from);
+		if (null != refs) {
+			for (ServiceReference ref : refs) {
+				Translator t = (Translator) context.getService(ref);
+				try {
+					if (t.canTranslate(from)) {
+						return t.translate(from);
+					}
+				} finally {
+					context.ungetService(ref);
 				}
-			} finally {
-				context.ungetService(ref);
 			}
 		}
 

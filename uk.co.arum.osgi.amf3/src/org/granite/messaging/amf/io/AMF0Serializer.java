@@ -40,7 +40,6 @@ import uk.co.arum.osgi.amf3.AMFFactory;
 import flex.messaging.io.ASObject;
 import flex.messaging.io.ASRecordSet;
 
-
 /**
  * AMF Serializer
  * 
@@ -52,7 +51,7 @@ import flex.messaging.io.ASRecordSet;
  * @version $Revision: 1.54 $, $Date: 2006/03/25 23:41:41 $
  */
 public class AMF0Serializer {
-	
+
 	private static final int MILLS_PER_HOUR = 60000;
 	/**
 	 * Null message
@@ -193,11 +192,11 @@ public class AMF0Serializer {
 			if (value instanceof Object[]) {
 				// write Object Array
 				writeArray((Object[]) value);
-			} else if (value instanceof Iterator) {
+			} else if (value instanceof Iterator<?>) {
 				write((Iterator<?>) value);
-			} else if (value instanceof Collection) {
+			} else if (value instanceof Collection<?>) {
 				write((Collection<?>) value);
-			} else if (value instanceof Map) {
+			} else if (value instanceof Map<?, ?>) {
 				writeMap((Map<?, ?>) value);
 			} else if (value instanceof ResultSet) {
 				ASRecordSet asRecordSet = new ASRecordSet();
@@ -207,11 +206,11 @@ public class AMF0Serializer {
 				write((Document) value);
 			} else {
 				/*
-				MM's gateway requires all objects to be marked with the
-				Serializable interface in order to be serialized
-				That should still be followed if possible, but there is
-				no good reason to enforce it.
-				*/
+				 * MM's gateway requires all objects to be marked with the
+				 * Serializable interface in order to be serialized That should
+				 * still be followed if possible, but there is no good reason to
+				 * enforce it.
+				 */
 				writeObject(value);
 			}
 		}

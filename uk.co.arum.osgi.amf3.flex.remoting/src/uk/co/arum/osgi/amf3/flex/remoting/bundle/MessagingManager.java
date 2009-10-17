@@ -23,8 +23,10 @@ package uk.co.arum.osgi.amf3.flex.remoting.bundle;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -35,31 +37,37 @@ import java.util.UUID;
 
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
-import org.osgi.service.log.LogService;
 
 import uk.co.arum.osgi.amf3.flex.remoting.events.PublishedObjectEvent;
+import uk.co.arum.osgi.glue.Activatable;
+import uk.co.arum.osgi.glue.GlueableService;
 import flex.messaging.messages.AsyncMessage;
 
 @SuppressWarnings("unchecked")
-public class MessagingManager implements EventHandler {
+public class MessagingManager implements Activatable, GlueableService,
+		EventHandler {
 
 	// TODO make this configurable? if so, how?
 	public static final long SUBSCRIPTION_TIMEOUT = 1000 * 30;
 
-	private EventAdmin eventAdmin;
+	private final Map<String, Long> accessTimes = new HashMap<String, Long>();
 
-	private LogService logService;
+	private EventAdmin eventAdmin;
 
 	private final Set<Subscription> subscriptions = Collections
 			.synchronizedSet(new HashSet<Subscription>());
 
+	private Timer timer;
+
 	private final Map<String, List> waitingMessages = new HashMap<String, List>();
 
-	private final Map<String, Long> accessTimes = new HashMap<String, Long>();
-
 	public MessagingManager() {
-		Timer timer = new Timer();
+	}
+
+	public void activate() throws Exception {
+		timer = new Timer();
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
@@ -68,24 +76,13 @@ public class MessagingManager implements EventHandler {
 		}, SUBSCRIPTION_TIMEOUT);
 	}
 
-	public void setEventAdmin(EventAdmin eventAdmin) {
+	public void bind(EventAdmin eventAdmin) {
 		this.eventAdmin = eventAdmin;
 	}
 
-	public void setLogService(LogService logService) {
-		this.logService = logService;
-	}
-
-	public void handleEvent(Event event) {
-		if (event instanceof PublishedObjectEvent) {
-			PublishedObjectEvent poevent = (PublishedObjectEvent) event;
-
-			// if the event was generated internally dispatch the event to
-			// connected clients
-			if (null == poevent.getSourceID()) {
-				dispatch(poevent);
-			}
-		}
+	public void deactivate() throws Exception {
+		timer.cancel();
+		timer = null;
 	}
 
 	public void dispatch(PublishedObjectEvent event) {
@@ -97,12 +94,7 @@ public class MessagingManager implements EventHandler {
 
 		// if the event was generated externally dispatch an osgi event
 		if (null != event.getSourceID()) {
-			if (eventAdmin != null) {
-				eventAdmin.postEvent(event);
-			} else {
-				logService.log(LogService.LOG_WARNING,
-						"PublishedObjectEvent: No event admin");
-			}
+			eventAdmin.postEvent(event);
 		}
 	}
 
@@ -132,6 +124,70 @@ public class MessagingManager implements EventHandler {
 		}
 
 		return null;
+	}
+
+	public Dictionary getProperties(String serviceName) {
+
+		if (serviceName.equals(EventHandler.class.getName())) {
+			String[] topics = new String[] { PublishedObjectEvent.TOPIC };
+			Hashtable ht = new Hashtable();
+			ht.put(EventConstants.EVENT_TOPIC, topics);
+			return ht;
+		}
+
+		return null;
+	}
+
+	public String getServiceFilter(String serviceName, String name) {
+		return null;
+	}
+
+	public String[] getServiceNames() {
+		return new String[] { EventHandler.class.getName(),
+				MessagingManager.class.getName() };
+	}
+
+	public Collection<Subscription> getSubscriptions(String subscriptionID) {
+		Set<Subscription> subs = new HashSet<Subscription>();
+
+		for (Subscription sub : subscriptions) {
+			if (sub.isSubscribed(subscriptionID)) {
+				subs.add(sub);
+			}
+		}
+
+		return subs;
+	}
+
+	public void handleEvent(Event event) {
+		if (event instanceof PublishedObjectEvent) {
+			PublishedObjectEvent poevent = (PublishedObjectEvent) event;
+
+			// if the event was generated internally dispatch the event to
+			// connected clients
+			if (null == poevent.getSourceID()) {
+				dispatch(poevent);
+			}
+		}
+	}
+
+	public void sendMessage(String subscriptionID, String channelID,
+			Object message) {
+		List messages = waitingMessages.get(subscriptionID);
+
+		// only send if subscribed. this subscription could have timed out
+		// or have been unsubscribed in the time it took to call this.
+		if (null != messages) {
+			AsyncMessage async = new AsyncMessage();
+			// async.setClientId(UUID.randomUUID().toString().toUpperCase());
+			async.setClientId(subscriptionID);
+			async.setHeader("DSId", subscriptionID);
+			async.setMessageId(UUID.randomUUID().toString().toUpperCase());
+			async.setDestination(channelID);
+			async.setBody(message);
+			async.setTimestamp(System.currentTimeMillis());
+			messages.add(async);
+		}
 	}
 
 	public void subscribe(String subscriptionID, String channel) {
@@ -164,34 +220,11 @@ public class MessagingManager implements EventHandler {
 
 	}
 
-	public Collection<Subscription> getSubscriptions(String subscriptionID) {
-		Set<Subscription> subs = new HashSet<Subscription>();
-
-		for (Subscription sub : subscriptions) {
-			if (sub.isSubscribed(subscriptionID)) {
-				subs.add(sub);
-			}
-		}
-
-		return subs;
-	}
-
-	public void sendMessage(String subscriptionID, String channelID,
-			Object message) {
-		List messages = waitingMessages.get(subscriptionID);
-
-		// only send if subscribed. this subscription could have timed out
-		// or have been unsubscribed in the time it took to call this.
-		if (null != messages) {
-			AsyncMessage async = new AsyncMessage();
-			// async.setClientId(UUID.randomUUID().toString().toUpperCase());
-			async.setClientId(subscriptionID);
-			async.setHeader("DSId", subscriptionID);
-			async.setMessageId(UUID.randomUUID().toString().toUpperCase());
-			async.setDestination(channelID);
-			async.setBody(message);
-			async.setTimestamp(System.currentTimeMillis());
-			messages.add(async);
+	private void addSubscriber(String subscriptionID, String channel,
+			String topic) {
+		Collection<Subscription> subs = find(channel);
+		for (Subscription sub : subs) {
+			sub.addSubscription(subscriptionID);
 		}
 	}
 
@@ -221,14 +254,6 @@ public class MessagingManager implements EventHandler {
 		}
 
 		return subs;
-	}
-
-	private void addSubscriber(String subscriptionID, String channel,
-			String topic) {
-		Collection<Subscription> subs = find(channel);
-		for (Subscription sub : subs) {
-			sub.addSubscription(subscriptionID);
-		}
 	}
 
 }

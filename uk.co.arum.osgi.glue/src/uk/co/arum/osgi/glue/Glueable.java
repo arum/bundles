@@ -13,8 +13,8 @@ package uk.co.arum.osgi.glue;
  * all dependencies are satisfied the component is then considered activated.
  * 
  * <p/>
- * optional (0..1) - services are bound using optionalBind (and unbound
- * using optionalUnbind), otherwise bind must be used. e.g.
+ * optional (0..1) - services are bound using optionalBind (and unbound using
+ * optionalUnbind), otherwise bind must be used. e.g.
  * <p/>
  * <code><pre>
  * // activation will not occur until this has been called
@@ -62,10 +62,10 @@ package uk.co.arum.osgi.glue;
  * a new array of matching services will be passed to the bind method.
  * <p/>
  * 
- * Finally, in order to have the same type of service injected multiple
- * times but with a different service filter Glue will take any text after the
- * bind or set part of the method name. Matching unbind/optionalUnbind methods
- * must still be specified, e.g.
+ * Finally, in order to have the same type of service injected multiple times
+ * but with a different service filter Glue will take any text after the bind or
+ * set part of the method name. Matching unbind/optionalUnbind methods must
+ * still be specified, e.g.
  * <p/>
  * 
  * <code><pre>
@@ -106,11 +106,11 @@ public interface Glueable {
 	 * 
 	 * @param serviceName
 	 *            the name of the OSGi service to lookup
-	 * @param name
+	 * @param bindName
 	 *            any text after 'bind' or 'optionalBind' for a given service,
 	 *            blank if none, but always non-null
 	 * @return the filter to use
 	 */
-	String getServiceFilter(String serviceName, String name);
+	String getServiceFilter(String serviceName, String bindName);
 
 }

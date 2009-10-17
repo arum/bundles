@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="osgibb" default="default" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<ivy:settings file="../../ivysettings.xml" />
+
+	<target name="default">
+
+		<ivy:resolve />
+
+		<ivy:publish resolver="local" artifactspattern="[artifact].[ext]" pubrevision="1.0.5" overwrite="true" />
+
+	</target>
+
+
+</project>

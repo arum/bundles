@@ -23,6 +23,8 @@ package uk.co.arum.osgi.amf3.http.bundle;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Dictionary;
+import java.util.Hashtable;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -32,6 +34,8 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
 
+import org.osgi.service.cm.ConfigurationException;
+import org.osgi.service.cm.ManagedService;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.log.LogService;
@@ -45,9 +49,10 @@ import uk.co.arum.osgi.amf3.io.AMFProcessor;
 import uk.co.arum.osgi.glue.Activatable;
 import uk.co.arum.osgi.glue.Glueable;
 
-public class AMFServlet extends HttpServlet implements Glueable, Activatable {
+public class AMFServlet extends HttpServlet implements Glueable, Activatable,
+		ManagedService {
 
-	private static final String ALIAS_OSGIAMF = "/amf3osgi";
+	private static final String AMF_SERVLET_ALIAS = "amf.servlet.alias";
 
 	private static final long serialVersionUID = 1L;
 
@@ -60,6 +65,8 @@ public class AMFServlet extends HttpServlet implements Glueable, Activatable {
 	private EventAdmin eventAdmin;
 
 	private LogService logService;
+
+	private String alias;
 
 	public AMFServlet() {
 	}
@@ -91,13 +98,44 @@ public class AMFServlet extends HttpServlet implements Glueable, Activatable {
 	}
 
 	public void activate() throws Exception {
-		processor = new AMFProcessor(compoundFactory);
-		httpService.registerServlet(ALIAS_OSGIAMF, this, null, null);
+		updated(null);
 	}
 
 	public void deactivate() throws Exception {
-		httpService.unregister(ALIAS_OSGIAMF);
+		cleanup();
+	}
+
+	private void cleanup() {
 		processor = null;
+		if (null != httpService) {
+			httpService.unregister(alias);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public void updated(Dictionary config) throws ConfigurationException {
+		cleanup();
+
+		if (null == config) {
+			config = createDefaultConfig();
+		}
+
+		try {
+			alias = (String) config.get(AMF_SERVLET_ALIAS);
+			httpService.registerServlet(alias, this, null, null);
+			processor = new AMFProcessor(compoundFactory);
+		} catch (Exception e) {
+			throw new ConfigurationException(AMF_SERVLET_ALIAS,
+					"Unable to register servlet", e);
+		}
+
+	}
+
+	@SuppressWarnings("unchecked")
+	private Dictionary createDefaultConfig() {
+		Dictionary config = new Hashtable();
+		config.put(AMF_SERVLET_ALIAS, "/amf3osgi");
+		return config;
 	}
 
 	@Override

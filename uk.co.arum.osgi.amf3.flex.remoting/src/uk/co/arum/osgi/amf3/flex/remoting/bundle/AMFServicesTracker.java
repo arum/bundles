@@ -5,16 +5,13 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.util.tracker.ServiceTracker;
 
-import uk.co.arum.osgi.amf3.flex.remoting.OSGiAMFConstants;
-
 public class AMFServicesTracker extends ServiceTracker {
 
 	private final OSGiAMFConfig config;
 
-	public AMFServicesTracker(BundleContext context, OSGiAMFConfig config)
-			throws InvalidSyntaxException {
-		super(context, context.createFilter("("
-				+ OSGiAMFConstants.AMF_SERVICE_NAME + "=*)"), null);
+	public AMFServicesTracker(BundleContext context, OSGiAMFConfig config,
+			String propertyName) throws InvalidSyntaxException {
+		super(context, context.createFilter("(" + propertyName + "=*)"), null);
 		this.config = config;
 	}
 

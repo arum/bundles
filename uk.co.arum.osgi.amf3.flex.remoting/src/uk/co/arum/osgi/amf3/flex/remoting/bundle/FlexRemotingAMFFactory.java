@@ -26,13 +26,18 @@ import java.io.ObjectOutput;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.UUID;
 
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.service.cm.ConfigurationException;
+import org.osgi.service.cm.ManagedService;
 import org.osgi.service.log.LogService;
 
 import uk.co.arum.osgi.amf3.AMFFactory;
+import uk.co.arum.osgi.amf3.flex.remoting.OSGiAMFConstants;
 import uk.co.arum.osgi.amf3.flex.remoting.RemotingContext;
 import uk.co.arum.osgi.amf3.flex.remoting.events.PublishedObjectEvent;
 import uk.co.arum.osgi.glue.Activatable;
@@ -46,7 +51,9 @@ import flex.messaging.messages.Message;
 import flex.messaging.messages.RemotingMessage;
 
 public class FlexRemotingAMFFactory implements GlueableService, Activatable,
-		Contextual, AMFFactory {
+		Contextual, AMFFactory, ManagedService {
+
+	private static final String AMF_SERVICE_PROPERTY_NAME = "amf.service.property.name";
 
 	private static final String NIL_DSID = "nil";
 
@@ -179,20 +186,49 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 	public void activate() throws Exception {
 		logService.log(LogService.LOG_DEBUG,
 				"FlexRemotingAMFFactory - ACTIVATED");
-		config = new OSGiAMFConfig(context);
-		amfServicesTracker = new AMFServicesTracker(context, config);
-		amfServicesTracker.open();
 	}
 
 	public void deactivate() throws Exception {
 		logService.log(LogService.LOG_DEBUG,
 				"FlexRemotingAMFFactory - DEACTIVATING");
 
+		cleanup();
+	}
+
+	private void cleanup() {
 		amfServicesTracker.close();
 		amfServicesTracker = null;
 
 		config.dispose();
 		config = null;
+	}
+
+	@SuppressWarnings("unchecked")
+	public void updated(Dictionary properties) throws ConfigurationException {
+		cleanup();
+
+		if (null == properties) {
+			properties = createDefaultConfig();
+		}
+
+		config = new OSGiAMFConfig(context);
+		try {
+			amfServicesTracker = new AMFServicesTracker(context, config,
+					(String) properties.get(AMF_SERVICE_PROPERTY_NAME));
+		} catch (InvalidSyntaxException e) {
+		}
+		amfServicesTracker.open();
+	}
+
+	@SuppressWarnings("unchecked")
+	private Dictionary createDefaultConfig() {
+		Dictionary config = new Hashtable();
+
+		config
+				.put(AMF_SERVICE_PROPERTY_NAME,
+						OSGiAMFConstants.AMF_SERVICE_NAME);
+
+		return config;
 	}
 
 	public void bindContext(BundleContext context) {

@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
@@ -240,6 +241,13 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 	}
 
 	public Dictionary<?, ?> getProperties(String serviceName) {
+
+		if (serviceName.equals(ManagedService.class.getName())) {
+			Dictionary<String, String> properties = new Hashtable<String, String>();
+			properties.put(Constants.SERVICE_PID, getClass().getName());
+			return properties;
+		}
+
 		return null;
 	}
 
@@ -248,7 +256,8 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 	}
 
 	public String[] getServiceNames() {
-		return new String[] { AMFFactory.class.getName() };
+		return new String[] { AMFFactory.class.getName(),
+				ManagedService.class.getName() };
 	}
 
 	private Object doProcess(Object o) {

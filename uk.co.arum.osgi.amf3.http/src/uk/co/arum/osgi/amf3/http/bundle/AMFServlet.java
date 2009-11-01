@@ -34,6 +34,7 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
 
+import org.osgi.framework.Constants;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.osgi.service.event.EventAdmin;
@@ -47,10 +48,10 @@ import uk.co.arum.osgi.amf3.http.events.HttpSessionCreatedEvent;
 import uk.co.arum.osgi.amf3.http.events.HttpSessionExpiredEvent;
 import uk.co.arum.osgi.amf3.io.AMFProcessor;
 import uk.co.arum.osgi.glue.Activatable;
-import uk.co.arum.osgi.glue.Glueable;
+import uk.co.arum.osgi.glue.GlueableService;
 
-public class AMFServlet extends HttpServlet implements Glueable, Activatable,
-		ManagedService {
+public class AMFServlet extends HttpServlet implements GlueableService,
+		Activatable, ManagedService {
 
 	private static final String AMF_SERVLET_ALIAS = "amf.servlet.alias";
 
@@ -69,6 +70,19 @@ public class AMFServlet extends HttpServlet implements Glueable, Activatable,
 	private String alias;
 
 	public AMFServlet() {
+	}
+
+	public Dictionary<?, ?> getProperties(String serviceName) {
+		if (serviceName.equals(ManagedService.class.getName())) {
+			Dictionary<String, String> properties = new Hashtable<String, String>();
+			properties.put(Constants.SERVICE_PID, getClass().getName());
+			return properties;
+		}
+		return null;
+	}
+
+	public String[] getServiceNames() {
+		return new String[] { ManagedService.class.getName() };
 	}
 
 	public void bind(HttpService httpService) {

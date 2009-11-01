@@ -72,6 +72,8 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 
 	private AMFServicesTracker amfServicesTracker;
 
+	private boolean activated;
+
 	public FlexRemotingAMFFactory() {
 	}
 
@@ -187,12 +189,14 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 	public void activate() throws Exception {
 		logService.log(LogService.LOG_DEBUG,
 				"FlexRemotingAMFFactory - ACTIVATED");
+		activated = true;
+		updated(null);
 	}
 
 	public void deactivate() throws Exception {
 		logService.log(LogService.LOG_DEBUG,
 				"FlexRemotingAMFFactory - DEACTIVATING");
-
+		activated = false;
 		cleanup();
 	}
 
@@ -212,17 +216,19 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 	public void updated(Dictionary properties) throws ConfigurationException {
 		cleanup();
 
-		if (null == properties) {
-			properties = createDefaultConfig();
-		}
+		if (activated) {
+			if (null == properties) {
+				properties = createDefaultConfig();
+			}
 
-		config = new OSGiAMFConfig(context);
-		try {
-			amfServicesTracker = new AMFServicesTracker(context, config,
-					(String) properties.get(AMF_SERVICE_PROPERTY_NAME));
-		} catch (InvalidSyntaxException e) {
+			config = new OSGiAMFConfig(context);
+			try {
+				amfServicesTracker = new AMFServicesTracker(context, config,
+						(String) properties.get(AMF_SERVICE_PROPERTY_NAME));
+			} catch (InvalidSyntaxException e) {
+			}
+			amfServicesTracker.open();
 		}
-		amfServicesTracker.open();
 	}
 
 	@SuppressWarnings("unchecked")

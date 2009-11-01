@@ -197,11 +197,15 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 	}
 
 	private void cleanup() {
-		amfServicesTracker.close();
-		amfServicesTracker = null;
+		if (null != amfServicesTracker) {
+			amfServicesTracker.close();
+			amfServicesTracker = null;
+		}
 
-		config.dispose();
-		config = null;
+		if (null != config) {
+			config.dispose();
+			config = null;
+		}
 	}
 
 	@SuppressWarnings("unchecked")

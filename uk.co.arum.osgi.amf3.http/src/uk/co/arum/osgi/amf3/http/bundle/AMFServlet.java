@@ -69,6 +69,8 @@ public class AMFServlet extends HttpServlet implements GlueableService,
 
 	private String alias;
 
+	private boolean active;
+
 	public AMFServlet() {
 	}
 
@@ -112,10 +114,16 @@ public class AMFServlet extends HttpServlet implements GlueableService,
 	}
 
 	public void activate() throws Exception {
+		logService.log(LogService.LOG_INFO, "AMFServlet - ACTIVATED");
+
+		active = true;
 		updated(null);
 	}
 
 	public void deactivate() throws Exception {
+		logService.log(LogService.LOG_INFO, "AMFServlet - DEACTIVATING");
+
+		active = false;
 		cleanup();
 	}
 
@@ -128,21 +136,24 @@ public class AMFServlet extends HttpServlet implements GlueableService,
 
 	@SuppressWarnings("unchecked")
 	public void updated(Dictionary config) throws ConfigurationException {
+		logService.log(LogService.LOG_INFO, "AMFServlet - updated(" + config
+				+ ")");
+
 		cleanup();
 
-		if (null == config) {
-			config = createDefaultConfig();
+		if (active) {
+			if (null == config) {
+				config = createDefaultConfig();
+			}
+			try {
+				alias = (String) config.get(AMF_SERVLET_ALIAS);
+				httpService.registerServlet(alias, this, null, null);
+				processor = new AMFProcessor(compoundFactory);
+			} catch (Exception e) {
+				throw new ConfigurationException(AMF_SERVLET_ALIAS,
+						"Unable to register servlet", e);
+			}
 		}
-
-		try {
-			alias = (String) config.get(AMF_SERVLET_ALIAS);
-			httpService.registerServlet(alias, this, null, null);
-			processor = new AMFProcessor(compoundFactory);
-		} catch (Exception e) {
-			throw new ConfigurationException(AMF_SERVLET_ALIAS,
-					"Unable to register servlet", e);
-		}
-
 	}
 
 	@SuppressWarnings("unchecked")

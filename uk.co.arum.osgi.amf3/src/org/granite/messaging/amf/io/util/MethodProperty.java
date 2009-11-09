@@ -21,7 +21,12 @@
 package org.granite.messaging.amf.io.util;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.HashSet;
+import java.util.Set;
+
+import flex.messaging.io.ArrayCollection;
 
 /**
  * @author Franck WOLFF
@@ -36,8 +41,8 @@ public class MethodProperty extends Property {
 		super(name);
 		this.setter = setter;
 		this.getter = getter;
-		this.type = getter != null ? getter.getGenericReturnType()
-				: setter.getParameterTypes()[0];
+		this.type = getter != null ? getter.getGenericReturnType() : setter
+				.getParameterTypes()[0];
 	}
 
 	@Override
@@ -48,25 +53,21 @@ public class MethodProperty extends Property {
 	@Override
 	public void setProperty(Object instance, Object value, boolean convert) {
 
-		/*
-		 * Basically, what is happening here is that if a property that is
-		 * supposedly an AMF Object is being set to null, it is coming through
-		 * as a type 0x9 element (array) with a single null value, rather than a
-		 * type 0x1 (null).
-		 * 
-		 * Can't see how granite handles this, or if there is something more
-		 * fundamentally wrong with the changes I have made to deserialisation.
-		 */
 		if (convert && value != null) {
+
 			if (!value.getClass().equals(type)) {
-				if (value instanceof Object[]) {
-					Object[] array = (Object[]) value;
-					if (array.length == 1 && array[0] == null) {
-						value = null;
-					}
+
+				if (isType0x9Bug(value)) {
+					value = null;
+				}
+
+				if (null != value
+						&& value.getClass().equals(ArrayCollection.class)) {
+					value = convertArrayCollection((ArrayCollection) value);
 				}
 
 			}
+
 		}
 
 		try {
@@ -85,4 +86,56 @@ public class MethodProperty extends Property {
 			throw new RuntimeException(e);
 		}
 	}
+
+	/**
+	 * Basically, what is happening here is that if a property that is
+	 * supposedly an AMF Object is being set to null, it is coming through as a
+	 * type 0x9 element (array) with a single null value, rather than a type 0x1
+	 * (null).
+	 * 
+	 * Can't see how granite handles this, or if there is something more
+	 * fundamentally wrong with the changes I have made to deserialisation.
+	 */
+	private boolean isType0x9Bug(Object value) {
+		if (value instanceof Object[]) {
+			Object[] array = (Object[]) value;
+			if (array.length == 1 && array[0] == null) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@SuppressWarnings("unchecked")
+	private Object convertArrayCollection(ArrayCollection in) {
+
+		Class cls = null;
+		if (type instanceof ParameterizedType) {
+			cls = (Class) ((ParameterizedType) type).getRawType();
+		} else if (type instanceof Class) {
+			cls = (Class) type;
+		} else {
+			throw new RuntimeException("Unknown reflection type : " + type);
+		}
+
+		if (Set.class.isAssignableFrom(cls)) {
+			Set set = null;
+
+			if (cls.isInterface()) {
+				set = new HashSet(in.size());
+			} else {
+				try {
+					set = (Set) cls.newInstance();
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			}
+
+			set.addAll(in);
+			return set;
+		}
+
+		return in;
+	}
+
 }

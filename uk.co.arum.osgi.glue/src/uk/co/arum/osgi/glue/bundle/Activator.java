@@ -150,11 +150,15 @@ public class Activator implements BundleActivator, SynchronousBundleListener {
 
 		public void log(ServiceReference sr, int level, String message,
 				Throwable exception) {
-			logService.log(sr, level, message);
+			logService.log(sr, level, message, exception);
 		}
 
 	}
 
+	/**
+	 * Tracks LogService and provides a dummy implementation when there isn't
+	 * one available.
+	 */
 	class LogServiceTracker extends ServiceTracker implements LogService {
 
 		public LogServiceTracker(BundleContext context) {

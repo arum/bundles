@@ -37,9 +37,21 @@ public class Activator implements BundleActivator, LogListener {
 	public void logged(LogEntry entry) {
 		String sr = null == entry.getServiceReference() ? "<no service reference>"
 				: entry.getServiceReference().toString();
+
 		String ex = null == entry.getException() ? "<no exception>" : entry
 				.getException().toString();
-		System.out.println(new Date(entry.getTime()) + " : " + entry.getLevel()
-				+ " : " + entry.getMessage() + " : " + ex + " : " + sr);
+		if (null != entry.getException()) {
+			entry.getException().printStackTrace();
+		}
+
+		String bundle = "<unknown bundle>";
+		if (null != entry.getBundle()) {
+			bundle = entry.getBundle().getSymbolicName();
+		}
+
+		System.out.println(bundle + " : " + new Date(entry.getTime()) + " : "
+				+ entry.getLevel() + " : " + entry.getMessage() + " : " + ex
+				+ " : " + sr);
+
 	}
 }

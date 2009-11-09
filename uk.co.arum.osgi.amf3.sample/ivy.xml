@@ -15,7 +15,7 @@
 		<dependency org="org.osgi" name="org.osgi.compendium" rev="4.1.0" />
 		<dependency org="uk.co.arum" name="uk.co.arum.osgi.amf3" rev="1.0.1" />
 		<dependency org="uk.co.arum" name="uk.co.arum.osgi.amf3.flex.remoting" rev="1.0.3" />
-		<dependency org="uk.co.arum" name="uk.co.arum.osgi.amf3.http" rev="1.0.0" />
+		<dependency org="uk.co.arum" name="uk.co.arum.osgi.amf3.http" rev="1.0.1" />
 		<dependency org="uk.co.arum" name="uk.co.arum.osgi.glue" rev="1.0.0" />
 	</dependencies>
 </ivy-module>

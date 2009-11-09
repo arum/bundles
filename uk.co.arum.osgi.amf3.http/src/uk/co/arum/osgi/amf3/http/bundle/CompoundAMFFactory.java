@@ -75,7 +75,7 @@ public class CompoundAMFFactory implements AMFFactory {
 		return null;
 	}
 
-	public Object process(Object in) {
+	public Object process(Object in) throws Exception {
 		for (AMFFactory factory : factories) {
 			Object out = factory.process(in);
 			if (null != out) {

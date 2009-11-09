@@ -23,11 +23,14 @@ package uk.co.arum.osgi.amf3.flex.remoting.bundle;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Dictionary;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.osgi.framework.BundleContext;
@@ -150,28 +153,28 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 		return null;
 	}
 
-	public Object process(Object o) {
-
-		try {
-			return doProcess(o);
-		} catch (RuntimeException e) {
-			Throwable t = e;
-
-			if (t.getCause() instanceof InvocationTargetException
-					&& null != t.getCause().getCause()) {
-				t = t.getCause().getCause();
-			}
-
-			logService
-					.log(LogService.LOG_WARNING, "An exception was thrown", t);
-
-			if (o instanceof Message) {
-				return new ErrorMessage((Message) o, t);
-			} else {
-				return new ErrorMessage(t);
+	public Object process(Object o) throws Exception {
+		if (o instanceof List<?>) {
+			List<?> list = (List<?>) o;
+			if (list.size() > 0) {
+				o = list.get(0);
 			}
 		}
 
+		Object response = null;
+		if (o instanceof CommandMessage) {
+			response = processCommandMessage((CommandMessage) o);
+		} else if (o instanceof RemotingMessage) {
+			RemotingMessage message = (RemotingMessage) o;
+			Object result = processRemotingMessage(message);
+			Message responseMessage = new AcknowledgeMessage(message);
+			responseMessage.setBody(result);
+			response = responseMessage;
+		} else {
+			response = processPublishMessage(o);
+		}
+
+		return response;
 	}
 
 	public Object handleException(Exception ex) {
@@ -224,12 +227,18 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 				properties = createDefaultConfig();
 			}
 
-			config = new OSGiAMFConfig(context);
+			String propName = (String) properties
+					.get(AMF_SERVICE_PROPERTY_NAME);
+
+			config = new OSGiAMFConfig(context, propName);
 			try {
+				logService.log(LogService.LOG_INFO,
+						"FlexRemotingAMFFactory - starting AMF tracker ["
+								+ propName + "]");
 				amfServicesTracker = new AMFServicesTracker(context,
-						logService, config, (String) properties
-								.get(AMF_SERVICE_PROPERTY_NAME));
+						logService, config, propName);
 			} catch (InvalidSyntaxException e) {
+
 			}
 			amfServicesTracker.open();
 		}
@@ -272,30 +281,6 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 	public String[] getServiceNames() {
 		return new String[] { AMFFactory.class.getName(),
 				ManagedService.class.getName() };
-	}
-
-	private Object doProcess(Object o) {
-		if (o instanceof List<?>) {
-			List<?> list = (List<?>) o;
-			if (list.size() > 0) {
-				o = list.get(0);
-			}
-		}
-
-		Object response = null;
-		if (o instanceof CommandMessage) {
-			response = processCommandMessage((CommandMessage) o);
-		} else if (o instanceof RemotingMessage) {
-			RemotingMessage message = (RemotingMessage) o;
-			Object result = processRemotingMessage(message);
-			Message responseMessage = new AcknowledgeMessage(message);
-			responseMessage.setBody(result);
-			response = responseMessage;
-		} else {
-			response = processPublishMessage(o);
-		}
-
-		return response;
 	}
 
 	private Object processCommandMessage(CommandMessage command) {
@@ -365,7 +350,51 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 		}
 	}
 
-	private Object processRemotingMessage(RemotingMessage remoting) {
+	private String argToString(Object arg) {
+
+		String s = "[" + arg + "]/";
+
+		if (arg == null) {
+			s = s + "[null]";
+		} else if (arg.getClass().isArray()) {
+			s = s + "{";
+			for (int i = 0; i < Array.getLength(arg); i++) {
+				s = s + argToString(Array.get(arg, i));
+			}
+			s = s + "}";
+		} else {
+			s = s + "[" + arg.getClass().getName() + "]";
+		}
+
+		return s;
+	}
+
+	private Object convertToArray(Object arg) {
+		Set<Class<?>> types = new HashSet<Class<?>>();
+		Object[] array = (Object[]) arg;
+
+		for (int i = 0; i < array.length; i++) {
+			if (array != null) {
+				types.add(array[i].getClass());
+			}
+		}
+
+		if (types.size() == 1) {
+			Object newArray = Array.newInstance(types.iterator().next(),
+					array.length);
+
+			for (int i = 0; i < array.length; i++) {
+				Array.set(newArray, i, array[i]);
+			}
+
+			return newArray;
+		}
+
+		return arg;
+	}
+
+	private Object processRemotingMessage(RemotingMessage remoting)
+			throws Exception {
 
 		OSGiServiceConfig serviceConfig = config.getServiceConfig(remoting
 				.getDestination());
@@ -377,7 +406,24 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 		}
 
 		// build the operation arguments
+		System.out.println("Method: " + remoting.getDestination() + "#"
+				+ remoting.getOperation() + " : ");
+		int index = 0;
 		Object[] opargs = (Object[]) remoting.getBody();
+		if (null != opargs) {
+			for (index = 0; index < opargs.length; index++) {
+				Object o = opargs[index];
+				System.out.println(index + "\t" + argToString(o));
+
+				if (null != o && o.getClass().isArray()) {
+					// convert to a proper array
+					opargs[index] = convertToArray(o);
+				}
+
+			}
+		}
+		System.out.println(index + " args");
+
 		Class<?>[] opargsClasses = new Class<?>[(null == opargs ? 0
 				: opargs.length)];
 
@@ -424,13 +470,16 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 					.getOperation()));
 		}
 
+		new RemotingContext(remoting);
 		try {
-			new RemotingContext(remoting);
 			Object returnValue = method.invoke(serviceConfig.getService(),
-					(Object[]) remoting.getBody());
+					opargs);
 			return config.translate(returnValue);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+		} catch (InvocationTargetException e) {
+			if (e.getCause() instanceof Exception) {
+				throw (Exception) e.getCause();
+			}
+			throw e;
 		}
 	}
 

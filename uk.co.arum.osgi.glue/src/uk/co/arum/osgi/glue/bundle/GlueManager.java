@@ -106,12 +106,8 @@ public class GlueManager {
 					bindings = new Bindings(paramType.getComponentType()
 							.getName());
 					bindings.multiple = true;
-					System.out.println("creating array binding "
-							+ paramType.getComponentType().getName() + "[]");
 				} else {
 					bindings = new Bindings(paramType.getName());
-					System.out.println("creating binding "
-							+ paramType.getName());
 				}
 				bindings.bindMethod = bindMethod;
 
@@ -168,6 +164,7 @@ public class GlueManager {
 	@SuppressWarnings("unchecked")
 	private void doActivate() {
 		logService.log(LogService.LOG_DEBUG, "Activating " + glueable);
+		boolean success = false;
 		try {
 
 			if (glueable instanceof Contextual) {
@@ -178,6 +175,7 @@ public class GlueManager {
 			if (glueable instanceof Activatable) {
 				Activatable act = (Activatable) glueable;
 				act.activate();
+				active = true;
 			}
 
 			if (glueable instanceof GlueableService) {
@@ -186,19 +184,19 @@ public class GlueManager {
 					Dictionary properties = service.getProperties(serviceName);
 
 					logService.log(LogService.LOG_DEBUG, "Registering "
-							+ glueable + " as " + serviceName);
+							+ glueable + " as " + serviceName
+							+ ", properties: " + properties);
 					registrations.add(glueableContext.registerService(
 							serviceName, service, properties));
 				}
 			}
 
-			active = true;
-
+			success = true;
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		} finally {
-			if (!active) {
+			if (active && !success) {
 				// something must have gone wrong, so deactivate
 				doDeactivate();
 			}
@@ -322,9 +320,7 @@ public class GlueManager {
 					.getProperty(Constants.OBJECTCLASS);
 
 			Collection<String> services = Arrays.asList(serviceNames);
-			logService.log(LogService.LOG_DEBUG, uid + " " + services);
 			if (!services.contains(serviceName)) {
-				logService.log(LogService.LOG_DEBUG, uid + " ignoring");
 				return;
 			}
 
@@ -332,6 +328,8 @@ public class GlueManager {
 				switch (event.getType()) {
 
 				case ServiceEvent.MODIFIED:
+					logService.log(LogService.LOG_DEBUG, uid
+							+ " handling MODIFIED");
 					serviceUnregistered(glueableContext.getService(event
 							.getServiceReference()));
 					serviceRegistered(glueableContext.getService(event
@@ -387,8 +385,6 @@ public class GlueManager {
 					Array.set(array, i++, value);
 				}
 
-				System.out.println("invoking " + bindMethod.getDeclaringClass()
-						+ "#bind(" + t + "[])");
 				bindMethod.invoke(glueable, new Object[] { array });
 
 				this.bound = array;
@@ -416,7 +412,6 @@ public class GlueManager {
 		}
 
 		Class<?> getArrayClass(Object o) {
-			System.out.println("Looking for " + serviceName);
 
 			Class<?>[] at = o.getClass().getInterfaces();
 			for (Class<?> i : at) {

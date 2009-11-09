@@ -56,7 +56,7 @@
 
 	<echo>[${flat.path}]</echo>
 
-	<osgijc bundledir="${basedir}">
+	<osgijc bundledir="${basedir}" debug="true">
 		<classpath refid="classpath.compile" />
 	</osgijc>
 </target>

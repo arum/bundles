@@ -32,19 +32,20 @@ import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
-import uk.co.arum.osgi.amf3.flex.remoting.OSGiAMFConstants;
 import uk.co.arum.osgi.amf3.flex.remoting.Translator;
 
 public class OSGiAMFConfig {
 
 	private final BundleContext context;
+	private final String propName;
 
 	private Map<String, OSGiServiceConfig> configs = new HashMap<String, OSGiServiceConfig>();
 	private Map<Long, Long> bundleCounts = new HashMap<Long, Long>();
 	private Map<Long, Bundle> bundles = new HashMap<Long, Bundle>();
 
-	public OSGiAMFConfig(BundleContext context) {
+	public OSGiAMFConfig(BundleContext context, String propName) {
 		this.context = context;
+		this.propName = propName;
 	}
 
 	/**
@@ -89,8 +90,7 @@ public class OSGiAMFConfig {
 		String[] serviceTypes = (String[]) ref
 				.getProperty(Constants.OBJECTCLASS);
 
-		String serviceName = (String) ref
-				.getProperty(OSGiAMFConstants.AMF_SERVICE_NAME);
+		String serviceName = (String) ref.getProperty(propName);
 
 		OSGiServiceConfig config = new OSGiServiceConfig(serviceName, ref
 				.getBundle(), o, serviceTypes);
@@ -107,8 +107,7 @@ public class OSGiAMFConfig {
 	}
 
 	public void removeOSGiService(ServiceReference ref) {
-		String serviceName = (String) ref
-				.getProperty(OSGiAMFConstants.AMF_SERVICE_NAME);
+		String serviceName = (String) ref.getProperty(propName);
 
 		configs.remove(serviceName);
 		context.ungetService(ref);

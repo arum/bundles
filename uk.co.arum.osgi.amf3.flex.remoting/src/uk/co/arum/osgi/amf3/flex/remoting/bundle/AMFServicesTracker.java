@@ -1,5 +1,7 @@
 package uk.co.arum.osgi.amf3.flex.remoting.bundle;
 
+import java.util.Arrays;
+
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
@@ -23,16 +25,21 @@ public class AMFServicesTracker extends ServiceTracker {
 
 	@Override
 	public Object addingService(ServiceReference reference) {
+		String[] serviceNames = (String[]) reference
+				.getProperty(Constants.OBJECTCLASS);
 		log.log(LogService.LOG_INFO, "Tracking AMF service: "
-				+ reference.getProperty(Constants.OBJECTCLASS));
+				+ Arrays.asList(serviceNames));
+
 		config.addOSGiService(reference);
 		return super.addingService(reference);
 	}
 
 	@Override
 	public void removedService(ServiceReference reference, Object service) {
-		log.log(LogService.LOG_INFO, "No longer tracking AMF service: "
-				+ reference.getProperty(Constants.OBJECTCLASS));
+		String[] serviceNames = (String[]) reference
+				.getProperty(Constants.OBJECTCLASS);
+		log.log(LogService.LOG_INFO, "Stopped tracking AMF service: "
+				+ Arrays.asList(serviceNames));
 		config.removeOSGiService(reference);
 		super.removedService(reference, service);
 	}

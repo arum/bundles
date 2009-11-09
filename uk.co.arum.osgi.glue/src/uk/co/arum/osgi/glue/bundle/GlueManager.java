@@ -413,11 +413,15 @@ public class GlueManager {
 
 		Class<?> getArrayClass(Object o) {
 
-			Class<?>[] at = o.getClass().getInterfaces();
-			for (Class<?> i : at) {
-				if (i.getName().equals(serviceName)) {
-					return i;
+			Class<?> parent = o.getClass();
+			while (parent != null) {
+				Class<?>[] at = parent.getInterfaces();
+				for (Class<?> i : at) {
+					if (i.getName().equals(serviceName)) {
+						return i;
+					}
 				}
+				parent = parent.getSuperclass();
 			}
 
 			throw new RuntimeException("Unable to find class " + serviceName

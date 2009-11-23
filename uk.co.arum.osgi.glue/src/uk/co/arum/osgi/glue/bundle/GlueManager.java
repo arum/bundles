@@ -38,6 +38,8 @@ public class GlueManager {
 
 	private final Map<String, Bindings> optionalBindingMethods = new HashMap<String, Bindings>();
 
+	private final Map<String, Bindings> whiteboardBindings = new HashMap<String, Bindings>();
+
 	private final Set<ServiceRegistration> registrations = new HashSet<ServiceRegistration>();
 
 	private Glueable glueable;
@@ -55,6 +57,7 @@ public class GlueManager {
 
 		extractRequiredBindings(glueable);
 		extractOptionalBindings(glueable);
+		extractWhiteboardBindings(glueable);
 
 		// try and satisfy all the bindings
 		Set<Bindings> allBindings = new HashSet<Bindings>();
@@ -92,7 +95,8 @@ public class GlueManager {
 	}
 
 	private void extractBindings(Glueable glueable, String bindMethodPrefix,
-			String unbindMethodPrefix, Map<String, Bindings> bindingMethods) {
+			String unbindMethodPrefix, Map<String, Bindings> bindingMethods,
+			boolean whiteboard) {
 
 		Method[] methods = glueable.getClass().getMethods();
 		for (Method bindMethod : methods) {
@@ -102,12 +106,17 @@ public class GlueManager {
 
 				Bindings bindings;
 				Class<?> paramType = bindMethod.getParameterTypes()[0];
+
 				if (paramType.isArray()) {
-					bindings = new Bindings(paramType.getComponentType()
-							.getName());
-					bindings.multiple = true;
+					if (whiteboard) {
+						continue;
+					} else {
+						bindings = new Bindings(paramType.getComponentType()
+								.getName(), whiteboard);
+						bindings.multiple = true;
+					}
 				} else {
-					bindings = new Bindings(paramType.getName());
+					bindings = new Bindings(paramType.getName(), whiteboard);
 				}
 				bindings.bindMethod = bindMethod;
 
@@ -151,14 +160,20 @@ public class GlueManager {
 		}
 	}
 
+	private void extractWhiteboardBindings(Glueable glueable) {
+		extractBindings(glueable, "register", "unregister", whiteboardBindings,
+				true);
+	}
+
 	private void extractOptionalBindings(Glueable glueable) {
 		extractBindings(glueable, "optionalBind", "optionalUnbind",
-				optionalBindingMethods);
+				optionalBindingMethods, false);
 	}
 
 	private void extractRequiredBindings(Glueable glueable)
 			throws NoSuchMethodException {
-		extractBindings(glueable, "bind", "unbind", requiredBindingMethods);
+		extractBindings(glueable, "bind", "unbind", requiredBindingMethods,
+				false);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -307,11 +322,15 @@ public class GlueManager {
 
 		private Set<Object> services = new HashSet<Object>();
 
-		public Bindings(String serviceName) {
+		public boolean whiteboard;
+
+		public Bindings(String serviceName, boolean whiteboard) {
 			this.serviceName = serviceName;
+			this.whiteboard = whiteboard;
 			uid = UUID.randomUUID().toString();
 			logService.log(LogService.LOG_DEBUG, uid + " " + serviceName
-					+ " bindings created for " + bound);
+					+ " bindings created for " + bound + ", deactivate : "
+					+ whiteboard);
 		}
 
 		public void serviceChanged(ServiceEvent event) {
@@ -358,6 +377,11 @@ public class GlueManager {
 		}
 
 		void serviceRegistered(Object o) throws Exception {
+
+			if (whiteboard) {
+				bindMethod.invoke(glueable, new Object[] { o });
+				return;
+			}
 
 			if (multiple) {
 				if (active) {
@@ -429,6 +453,11 @@ public class GlueManager {
 		}
 
 		void serviceUnregistered(Object o) throws Exception {
+			
+			if (whiteboard) {
+				unbindMethod.invoke(glueable, new Object[] { o });
+				return;
+			}
 
 			if (multiple) {
 				if (active) {

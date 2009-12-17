@@ -21,9 +21,7 @@
 
 package uk.co.arum.osgi.amf3.sample.bundle;
 
-import java.util.Dictionary;
 import java.util.Enumeration;
-import java.util.Hashtable;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -35,9 +33,8 @@ import uk.co.arum.osgi.amf3.http.HttpRequestContext;
 import uk.co.arum.osgi.amf3.sample.SampleObject;
 import uk.co.arum.osgi.amf3.sample.SimpleService;
 import uk.co.arum.osgi.amf3.sample.VerySimpleObject;
-import uk.co.arum.osgi.glue.GlueableService;
 
-public class SimpleServiceImpl implements SimpleService, GlueableService {
+public class SimpleServiceImpl implements SimpleService {
 
 	private SampleObject sampleObject;
 
@@ -55,7 +52,7 @@ public class SimpleServiceImpl implements SimpleService, GlueableService {
 
 	}
 
-	public void bind(HttpService httpService) {
+	public void bindHttpService(HttpService httpService) {
 		try {
 			httpService.registerResources("/sample", "/flexbin", null);
 		} catch (NamespaceException e) {
@@ -63,25 +60,8 @@ public class SimpleServiceImpl implements SimpleService, GlueableService {
 		}
 	}
 
-	public void unbind(HttpService httpService) {
+	public void unbindHttpService(HttpService httpService) {
 		httpService.unregister("/sample");
-	}
-
-	public Dictionary<?, ?> getProperties(String serviceName) {
-		if (serviceName.equals(SimpleService.class.getName())) {
-			Dictionary<String, String> properties = new Hashtable<String, String>();
-			properties.put("AMF_SERVICE_NAME", SimpleService.class.getName());
-			return properties;
-		}
-		return null;
-	}
-
-	public String getServiceFilter(String serviceName, String name) {
-		return null;
-	}
-
-	public String[] getServiceNames() {
-		return new String[] { SimpleService.class.getName() };
 	}
 
 	private SampleObject createSampleObject(SampleObject parent, String name,

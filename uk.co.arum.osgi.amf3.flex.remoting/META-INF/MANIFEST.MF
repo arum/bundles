@@ -13,10 +13,8 @@ Import-Package: flex.messaging.io,
  org.osgi.util.tracker;version="[1.3.3,2.0.0)",
  uk.co.arum.osgi.amf3;version="[1.0.0,2.0.0)",
  uk.co.arum.osgi.amf3.flex.remoting;version="[1.0.0,2.0.0)",
- uk.co.arum.osgi.amf3.flex.remoting.events;version="[1.0.0,2.0.0)",
- uk.co.arum.osgi.glue;version="[1.0.1,2.0.0)"
+ uk.co.arum.osgi.amf3.flex.remoting.events;version="[1.0.0,2.0.0)"
 Export-Package: flex.messaging.messages,
  uk.co.arum.osgi.amf3.flex.remoting;version="1.0.0",
  uk.co.arum.osgi.amf3.flex.remoting.events;version="1.0.0";uses:="org.osgi.service.event"
-Glueable-Component: uk.co.arum.osgi.amf3.flex.remoting.bundle.MessagingManager, 
- uk.co.arum.osgi.amf3.flex.remoting.bundle.FlexRemotingAMFFactory
+Service-Component: OSGI-INF/messaging.xml, OSGI-INF/remotingfactory.xml

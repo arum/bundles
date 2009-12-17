@@ -34,7 +34,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
@@ -44,9 +43,6 @@ import uk.co.arum.osgi.amf3.AMFFactory;
 import uk.co.arum.osgi.amf3.flex.remoting.OSGiAMFConstants;
 import uk.co.arum.osgi.amf3.flex.remoting.RemotingContext;
 import uk.co.arum.osgi.amf3.flex.remoting.events.PublishedObjectEvent;
-import uk.co.arum.osgi.glue.Activatable;
-import uk.co.arum.osgi.glue.Contextual;
-import uk.co.arum.osgi.glue.GlueableService;
 import flex.messaging.messages.AcknowledgeMessage;
 import flex.messaging.messages.AsyncMessage;
 import flex.messaging.messages.CommandMessage;
@@ -54,8 +50,9 @@ import flex.messaging.messages.ErrorMessage;
 import flex.messaging.messages.Message;
 import flex.messaging.messages.RemotingMessage;
 
-public class FlexRemotingAMFFactory implements GlueableService, Activatable,
-		Contextual, AMFFactory, ManagedService {
+public class FlexRemotingAMFFactory implements
+// GlueableService, Activatable,Contextual,
+		AMFFactory, ManagedService {
 
 	private static final String AMF_SERVICE_PROPERTY_NAME = "amf.service.property.name";
 
@@ -65,27 +62,36 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 
 	private static final String DSID = "DSId";
 
-	private OSGiAMFConfig config;
-
 	private MessagingManager messagingManager;
 
 	private LogService logService;
 
 	private BundleContext context;
 
+	private OSGiAMFConfig config;
+
 	private AMFServicesTracker amfServicesTracker;
 
 	private boolean active;
 
-	public FlexRemotingAMFFactory() {
-	}
-
-	public void bind(MessagingManager mgr) {
+	public void bindMessagingManager(MessagingManager mgr) {
 		this.messagingManager = mgr;
 	}
 
-	public void bind(LogService logService) {
+	public void unbindMessagingManager(MessagingManager mgr) {
+		if (this.messagingManager == mgr) {
+			this.messagingManager = null;
+		}
+	}
+
+	public void bindLogService(LogService logService) {
 		this.logService = logService;
+	}
+
+	public void unbindLogService(LogService logService) {
+		if (this.logService == logService) {
+			this.logService = null;
+		}
 	}
 
 	public String getDescription() {
@@ -193,7 +199,8 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 		return false;
 	}
 
-	public void activate() throws Exception {
+	public void activate(BundleContext context) throws Exception {
+		this.context = context;
 		logService.log(LogService.LOG_INFO,
 				"FlexRemotingAMFFactory - ACTIVATED");
 		active = true;
@@ -257,34 +264,6 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 						OSGiAMFConstants.AMF_SERVICE_NAME);
 
 		return config;
-	}
-
-	public void bindContext(BundleContext context) {
-		this.context = context;
-	}
-
-	public void unbindContext(BundleContext context) {
-		this.context = null;
-	}
-
-	public Dictionary<?, ?> getProperties(String serviceName) {
-
-		if (serviceName.equals(ManagedService.class.getName())) {
-			Dictionary<String, String> properties = new Hashtable<String, String>();
-			properties.put(Constants.SERVICE_PID, getClass().getName());
-			return properties;
-		}
-
-		return null;
-	}
-
-	public String getServiceFilter(String serviceName, String name) {
-		return null;
-	}
-
-	public String[] getServiceNames() {
-		return new String[] { AMFFactory.class.getName(),
-				ManagedService.class.getName() };
 	}
 
 	private Object processCommandMessage(CommandMessage command) {

@@ -34,7 +34,6 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
 
-import org.osgi.framework.Constants;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.osgi.service.event.EventAdmin;
@@ -47,17 +46,14 @@ import uk.co.arum.osgi.amf3.http.HttpRequestContext;
 import uk.co.arum.osgi.amf3.http.events.HttpSessionCreatedEvent;
 import uk.co.arum.osgi.amf3.http.events.HttpSessionExpiredEvent;
 import uk.co.arum.osgi.amf3.io.AMFProcessor;
-import uk.co.arum.osgi.glue.Activatable;
-import uk.co.arum.osgi.glue.GlueableService;
 
-public class AMFServlet extends HttpServlet implements GlueableService,
-		Activatable, ManagedService {
+public class AMFServlet extends HttpServlet implements ManagedService {
 
 	private static final String AMF_SERVLET_ALIAS = "amf.servlet.alias";
 
 	private static final long serialVersionUID = 1L;
 
-	private CompoundAMFFactory compoundFactory;
+	private CompoundAMFFactory compoundFactory = new CompoundAMFFactory();
 
 	private AMFProcessor processor;
 
@@ -74,55 +70,52 @@ public class AMFServlet extends HttpServlet implements GlueableService,
 	public AMFServlet() {
 	}
 
-	public Dictionary<?, ?> getProperties(String serviceName) {
-		if (serviceName.equals(ManagedService.class.getName())) {
-			Dictionary<String, String> properties = new Hashtable<String, String>();
-			properties.put(Constants.SERVICE_PID, getClass().getName());
-			return properties;
-		}
-		return null;
-	}
-
-	public String[] getServiceNames() {
-		return new String[] { ManagedService.class.getName() };
-	}
-
-	public void bind(HttpService httpService) {
+	public void bindHttpService(HttpService httpService) {
 		this.httpService = httpService;
 	}
 
-	public void bind(EventAdmin eventAdmin) {
+	public void unbindHttpService(HttpService httpService) {
+		if (this.httpService == httpService) {
+			this.httpService = null;
+		}
+	}
+
+	public void bindEventAdmin(EventAdmin eventAdmin) {
 		this.eventAdmin = eventAdmin;
 	}
 
-	public void bind(LogService logService) {
+	public void unbindEventAdmin(EventAdmin eventAdmin) {
+		if (this.eventAdmin == eventAdmin) {
+			this.eventAdmin = null;
+		}
+	}
+
+	public void bindLogService(LogService logService) {
 		this.logService = logService;
 	}
 
-	public void bind(AMFFactory[] factories) {
-		compoundFactory = new CompoundAMFFactory();
-		for (AMFFactory factory : factories) {
-			compoundFactory.add(factory);
+	public void unbindLogService(LogService logService) {
+		if (this.logService == logService) {
+			this.logService = null;
 		}
 	}
 
-	public void unbind(AMFFactory[] factories) {
-		for (AMFFactory factory : factories) {
-			compoundFactory.remove(factory);
-		}
-		compoundFactory = null;
+	public void addAMFFactory(AMFFactory factory) {
+		compoundFactory.add(factory);
+	}
+
+	public void removeAMFFactory(AMFFactory factory) {
+		compoundFactory.remove(factory);
 	}
 
 	public void activate() throws Exception {
 		logService.log(LogService.LOG_INFO, "AMFServlet - ACTIVATED");
-
 		active = true;
 		updated(null);
 	}
 
 	public void deactivate() throws Exception {
 		logService.log(LogService.LOG_INFO, "AMFServlet - DEACTIVATING");
-
 		active = false;
 		cleanup();
 	}
@@ -186,7 +179,7 @@ public class AMFServlet extends HttpServlet implements GlueableService,
 			// dispatch a new session event
 			if (null != eventAdmin) {
 				eventAdmin.postEvent(new HttpSessionCreatedEvent(context));
-			} else {
+			} else if (null != logService) {
 				logService.log(LogService.LOG_WARNING,
 						"HttpSessionCreatedEvent: No event admin service");
 			}
@@ -203,7 +196,7 @@ public class AMFServlet extends HttpServlet implements GlueableService,
 								eventAdmin
 										.postEvent(new HttpSessionExpiredEvent(
 												context));
-							} else {
+							} else if (null != logService) {
 								logService
 										.log(LogService.LOG_WARNING,
 												"HttpSessionExpiredEvent: No event admin service");
@@ -221,7 +214,4 @@ public class AMFServlet extends HttpServlet implements GlueableService,
 		response.getOutputStream().write(outBytes.toByteArray());
 	}
 
-	public String getServiceFilter(String serviceName, String name) {
-		return null;
-	}
 }

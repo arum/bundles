@@ -23,10 +23,8 @@ package uk.co.arum.osgi.amf3.flex.remoting.bundle;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -37,27 +35,23 @@ import java.util.UUID;
 
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
-import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 
 import uk.co.arum.osgi.amf3.flex.remoting.events.PublishedObjectEvent;
-import uk.co.arum.osgi.glue.Activatable;
-import uk.co.arum.osgi.glue.GlueableService;
 import flex.messaging.messages.AsyncMessage;
 
 @SuppressWarnings("unchecked")
-public class MessagingManager implements Activatable, GlueableService,
-		EventHandler {
+public class MessagingManager implements EventHandler {
 
 	// TODO make this configurable? if so, how?
 	public static final long SUBSCRIPTION_TIMEOUT = 1000 * 30;
 
 	private final Map<String, Long> accessTimes = new HashMap<String, Long>();
 
-	private EventAdmin eventAdmin;
-
 	private final Set<Subscription> subscriptions = Collections
 			.synchronizedSet(new HashSet<Subscription>());
+
+	private EventAdmin eventAdmin;
 
 	private Timer timer;
 
@@ -76,8 +70,14 @@ public class MessagingManager implements Activatable, GlueableService,
 		}, SUBSCRIPTION_TIMEOUT);
 	}
 
-	public void bind(EventAdmin eventAdmin) {
+	public void bindEventAdmin(EventAdmin eventAdmin) {
 		this.eventAdmin = eventAdmin;
+	}
+
+	public void unbindEventAdmin(EventAdmin eventAdmin) {
+		if (this.eventAdmin == eventAdmin) {
+			this.eventAdmin = null;
+		}
 	}
 
 	public void deactivate() throws Exception {
@@ -85,7 +85,7 @@ public class MessagingManager implements Activatable, GlueableService,
 		timer = null;
 	}
 
-	public void dispatch(PublishedObjectEvent event) {
+	void dispatch(PublishedObjectEvent event) {
 
 		// find a list of subscriptions for the given parameters
 		for (Subscription sub : find(event.getChannelID())) {
@@ -98,7 +98,7 @@ public class MessagingManager implements Activatable, GlueableService,
 		}
 	}
 
-	public Object[] getMessages(String subscriptionID) {
+	Object[] getMessages(String subscriptionID) {
 
 		Long lastAccess = accessTimes.get(subscriptionID);
 		if (null == lastAccess) {
@@ -126,28 +126,7 @@ public class MessagingManager implements Activatable, GlueableService,
 		return null;
 	}
 
-	public Dictionary getProperties(String serviceName) {
-
-		if (serviceName.equals(EventHandler.class.getName())) {
-			String[] topics = new String[] { PublishedObjectEvent.TOPIC };
-			Hashtable ht = new Hashtable();
-			ht.put(EventConstants.EVENT_TOPIC, topics);
-			return ht;
-		}
-
-		return null;
-	}
-
-	public String getServiceFilter(String serviceName, String name) {
-		return null;
-	}
-
-	public String[] getServiceNames() {
-		return new String[] { EventHandler.class.getName(),
-				MessagingManager.class.getName() };
-	}
-
-	public Collection<Subscription> getSubscriptions(String subscriptionID) {
+	Collection<Subscription> getSubscriptions(String subscriptionID) {
 		Set<Subscription> subs = new HashSet<Subscription>();
 
 		for (Subscription sub : subscriptions) {
@@ -171,7 +150,7 @@ public class MessagingManager implements Activatable, GlueableService,
 		}
 	}
 
-	public void sendMessage(String subscriptionID, String channelID,
+	void sendMessage(String subscriptionID, String channelID,
 			Object message) {
 		List messages = waitingMessages.get(subscriptionID);
 
@@ -190,7 +169,7 @@ public class MessagingManager implements Activatable, GlueableService,
 		}
 	}
 
-	public void subscribe(String subscriptionID, String channel) {
+	void subscribe(String subscriptionID, String channel) {
 
 		subscriptions.add(new Subscription(channel, null, this));
 		addSubscriber(subscriptionID, channel, null);
@@ -205,7 +184,7 @@ public class MessagingManager implements Activatable, GlueableService,
 
 	}
 
-	public void unsubscribe(String subscriptionID, String channel) {
+	void unsubscribe(String subscriptionID, String channel) {
 
 		Set<Subscription> expiredSubscriptions = new HashSet<Subscription>();
 		for (Subscription sub : getSubscriptions(subscriptionID)) {

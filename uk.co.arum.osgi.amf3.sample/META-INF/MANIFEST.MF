@@ -14,7 +14,5 @@ Import-Package: flex.messaging.messages,
  uk.co.arum.osgi.amf3;version="1.0.0",
  uk.co.arum.osgi.amf3.flex.remoting;version="1.0.0",
  uk.co.arum.osgi.amf3.flex.remoting.events;version="1.0.0",
- uk.co.arum.osgi.amf3.http;version="1.0.0",
- uk.co.arum.osgi.glue;version="[1.0.1,2.0.0)"
-Glueable-Component: uk.co.arum.osgi.amf3.sample.bundle.PublishedObjectEventHandler,
- uk.co.arum.osgi.amf3.sample.bundle.SimpleServiceImpl
+ uk.co.arum.osgi.amf3.http;version="1.0.0"
+Service-Component: OSGI-INF/publishedobjecthandler.xml, OSGI-INF/simpleservice.xml

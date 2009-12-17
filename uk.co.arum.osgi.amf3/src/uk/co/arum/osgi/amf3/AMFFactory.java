@@ -80,7 +80,7 @@ public interface AMFFactory {
 	 *            the object to process
 	 * @return the response
 	 */
-	Object process(Object o) throws Exception;
+	Object process(Object o);
 
 	/**
 	 * Get the response target for a given response object.
@@ -111,14 +111,5 @@ public interface AMFFactory {
 	 * @return the class
 	 */
 	Class<?> getObjectClass(Object o);
-
-	/**
-	 * Handle the given given exception.
-	 * 
-	 * @param ex
-	 *            the exception
-	 * @return an object that represents the exception
-	 */
-	Object handleException(Exception ex);
 
 }

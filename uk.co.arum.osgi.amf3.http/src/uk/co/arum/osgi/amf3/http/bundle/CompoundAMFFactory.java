@@ -75,7 +75,7 @@ public class CompoundAMFFactory implements AMFFactory {
 		return null;
 	}
 
-	public Object process(Object in) throws Exception {
+	public Object process(Object in) {
 		for (AMFFactory factory : factories) {
 			Object out = factory.process(in);
 			if (null != out) {
@@ -122,17 +122,6 @@ public class CompoundAMFFactory implements AMFFactory {
 			}
 		}
 		return false;
-	}
-
-	public Object handleException(Exception ex) {
-		for (AMFFactory factory : factories) {
-			Object o = factory.handleException(ex);
-			if (null != o) {
-				return o;
-			}
-		}
-
-		return null;
 	}
 
 }

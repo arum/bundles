@@ -74,6 +74,11 @@ public class MethodProperty extends Property {
 			Object[] params = new Object[] { value };
 			setter.invoke(instance, params);
 		} catch (Exception e) {
+
+			System.out.println("Exception " + e);
+			System.out.println(setter.getName() + " : " + instance + " : "
+					+ value + " : " + convert);
+
 			throw new RuntimeException(e);
 		}
 	}

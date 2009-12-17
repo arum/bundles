@@ -64,9 +64,21 @@ public class GlueManager {
 		allBindings.addAll(requiredBindingMethods.values());
 		allBindings.addAll(optionalBindingMethods.values());
 
+		bindExistingServices(glueable, glueableContext, allBindings);
+
+		// might be that this class doesn't require any bindings,
+		// so check to be sure
+		if (!active && allBindings.size() == 0) {
+			check();
+		}
+
+	}
+
+	private void bindExistingServices(Glueable glueable,
+			BundleContext glueableContext, Collection<Bindings> allBindings) {
 		for (Bindings bindings : allBindings) {
 
-			logService.log(LogService.LOG_DEBUG, "Searching for existing "
+			this.logService.log(LogService.LOG_DEBUG, "Searching for existing "
 					+ bindings.serviceName + "[" + bindings.serviceFilter
 					+ "] for " + glueable);
 			try {
@@ -85,13 +97,6 @@ public class GlueManager {
 			}
 
 		}
-
-		// might be that this class doesn't require any bindings,
-		// so check to be sure
-		if (!active && allBindings.size() == 0) {
-			check();
-		}
-
 	}
 
 	private void extractBindings(Glueable glueable, String bindMethodPrefix,
@@ -109,6 +114,7 @@ public class GlueManager {
 
 				if (paramType.isArray()) {
 					if (whiteboard) {
+						// whiteboard model can't handle arrays
 						continue;
 					} else {
 						bindings = new Bindings(paramType.getComponentType()
@@ -193,6 +199,11 @@ public class GlueManager {
 				active = true;
 			}
 
+			// bind existing whiteboard services
+			bindExistingServices(glueable, glueableContext, whiteboardBindings
+					.values());
+
+			// now register as a service if required
 			if (glueable instanceof GlueableService) {
 				GlueableService service = (GlueableService) glueable;
 				for (String serviceName : service.getServiceNames()) {
@@ -302,6 +313,20 @@ public class GlueManager {
 			}
 		}
 
+		// handle whiteboard bindings slightly differently
+		for (Bindings method : whiteboardBindings.values()) {
+			for (Object service : method.services) {
+				try {
+					if (null != method.unbindMethod) {
+						method.unbindMethod.invoke(glueable, service);
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+					throw new RuntimeException(e);
+				}
+			}
+		}
+
 	}
 
 	class Bindings implements ServiceListener {
@@ -379,7 +404,9 @@ public class GlueManager {
 		void serviceRegistered(Object o) throws Exception {
 
 			if (whiteboard) {
-				bindMethod.invoke(glueable, new Object[] { o });
+				if (services.add(o)) {
+					bindMethod.invoke(glueable, o);
+				}
 				return;
 			}
 
@@ -453,9 +480,11 @@ public class GlueManager {
 		}
 
 		void serviceUnregistered(Object o) throws Exception {
-			
+
 			if (whiteboard) {
-				unbindMethod.invoke(glueable, new Object[] { o });
+				if (services.remove(o)) {
+					unbindMethod.invoke(glueable, o);
+				}
 				return;
 			}
 

@@ -52,9 +52,6 @@ public class PublishedObjectEventHandler implements EventHandler,
 				return;
 			}
 
-			System.out.println(poe.getChannelID() + " : " + poe.getMessageID()
-					+ " : " + poe.getSourceID() + " : " + poe.getObject());
-
 			String replyText = "Reply to published object " + new Date()
 					+ " : " + poe.getObject();
 

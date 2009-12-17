@@ -11,7 +11,7 @@
 		<!-- setup local repository of dependencies -->
 		<ant dir="libs/uk.org.brindy.osgibb/" antfile="publish.xml" />
 		<ant dir="libs/uk.org.brindy.osgijc/" antfile="publish.xml" />
-
+	
 		<!-- build all the bundles -->
 		<ant dir="../uk.co.arum.osgi.log.sysout" target="complete" />
 		<ant dir="../uk.co.arum.osgi.glue" target="complete" />

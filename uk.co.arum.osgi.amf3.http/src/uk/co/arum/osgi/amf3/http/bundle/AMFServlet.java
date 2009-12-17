@@ -129,7 +129,7 @@ public class AMFServlet extends HttpServlet implements GlueableService,
 
 	private void cleanup() {
 		processor = null;
-		if (null != httpService) {
+		if (null != httpService && alias != null) {
 			httpService.unregister(alias);
 		}
 	}

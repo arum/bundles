@@ -59,14 +59,7 @@ public class AMFProcessor {
 			Object value = requestBody.getValue();
 			Object response = null;
 
-			try {
-				response = factory.process(value);
-			} catch (Exception ex) {
-				response = factory.handleException(ex);
-				if (null == response) {
-					response = ex;
-				}
-			}
+			response = factory.process(value);
 
 			if (null != response) {
 				AMF3Object data = new AMF3Object(response);

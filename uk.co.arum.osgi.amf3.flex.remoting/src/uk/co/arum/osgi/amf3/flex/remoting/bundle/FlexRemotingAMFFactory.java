@@ -153,7 +153,7 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 		return null;
 	}
 
-	public Object process(Object o) throws Exception {
+	public Object process(Object o) {
 		if (o instanceof List<?>) {
 			List<?> list = (List<?>) o;
 			if (list.size() > 0) {
@@ -166,10 +166,14 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 			response = processCommandMessage((CommandMessage) o);
 		} else if (o instanceof RemotingMessage) {
 			RemotingMessage message = (RemotingMessage) o;
-			Object result = processRemotingMessage(message);
-			Message responseMessage = new AcknowledgeMessage(message);
-			responseMessage.setBody(result);
-			response = responseMessage;
+			try {
+				Object result = processRemotingMessage(message);
+				Message responseMessage = new AcknowledgeMessage(message);
+				responseMessage.setBody(result);
+				response = responseMessage;
+			} catch (Exception e) {
+				response = new ErrorMessage(message, e);
+			}
 		} else {
 			response = processPublishMessage(o);
 		}
@@ -350,25 +354,6 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 		}
 	}
 
-	private String argToString(Object arg) {
-
-		String s = "[" + arg + "]/";
-
-		if (arg == null) {
-			s = s + "[null]";
-		} else if (arg.getClass().isArray()) {
-			s = s + "{";
-			for (int i = 0; i < Array.getLength(arg); i++) {
-				s = s + argToString(Array.get(arg, i));
-			}
-			s = s + "}";
-		} else {
-			s = s + "[" + arg.getClass().getName() + "]";
-		}
-
-		return s;
-	}
-
 	private Object convertToArray(Object arg) {
 		Set<Class<?>> types = new HashSet<Class<?>>();
 		Object[] array = (Object[]) arg;
@@ -406,14 +391,11 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 		}
 
 		// build the operation arguments
-		System.out.println("Method: " + remoting.getDestination() + "#"
-				+ remoting.getOperation() + " : ");
 		int index = 0;
 		Object[] opargs = (Object[]) remoting.getBody();
 		if (null != opargs) {
 			for (index = 0; index < opargs.length; index++) {
 				Object o = opargs[index];
-				System.out.println(index + "\t" + argToString(o));
 
 				if (null != o && o.getClass().isArray()) {
 					// convert to a proper array
@@ -422,7 +404,6 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 
 			}
 		}
-		System.out.println(index + " args");
 
 		Class<?>[] opargsClasses = new Class<?>[(null == opargs ? 0
 				: opargs.length)];
@@ -523,7 +504,7 @@ public class FlexRemotingAMFFactory implements GlueableService, Activatable,
 			Object[] args) {
 		Method method = null;
 		try {
-			method = c.getDeclaredMethod(name, argTypes);
+			method = c.getMethod(name, argTypes);
 		} catch (NoSuchMethodException e) {
 			// could happen
 			for (Method xMethod : c.getDeclaredMethods()) {

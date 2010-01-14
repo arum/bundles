@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="uk.co.arum.osgi.amf3.sample.SimpleService">
+   <implementation class="uk.co.arum.osgi.amf3.sample.bundle.SimpleServiceImpl"/>
+   <property name="AMF_SERVICE_NAME" type="String" value="uk.co.arum.osgi.amf3.sample.SimpleService"/>
+   <service>
+      <provide interface="uk.co.arum.osgi.amf3.sample.SimpleService"/>
+   </service>
+   <reference bind="bindHttpService" cardinality="1..1" interface="org.osgi.service.http.HttpService" name="HttpService" policy="static" unbind="unbindHttpService"/>
+</scr:component>

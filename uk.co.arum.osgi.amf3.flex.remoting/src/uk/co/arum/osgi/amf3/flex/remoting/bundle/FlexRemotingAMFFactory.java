@@ -26,6 +26,7 @@ import java.io.ObjectOutput;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -397,37 +398,23 @@ public class FlexRemotingAMFFactory implements
 			}
 		}
 
+		Class<?> serviceClass = findServiceClass(serviceConfig);
 		Method method = null;
-		for (String type : serviceConfig.getServiceTypes()) {
 
-			try {
-				Class<?> serviceClass = serviceConfig.getProvider().loadClass(
-						type);
-
-				// is there an operation on this class that matches requested
-				// operation?
-				if (null != serviceClass) {
-					method = findMethod(serviceClass, remoting.getOperation(),
-							opargsClasses, opargs);
-				}
-
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-
+		if (null != serviceClass) {
+			method = findMethod(serviceClass, remoting.getOperation(),
+					opargsClasses, opargs);
 		}
 
 		// if no operation has been found, throw an exception
 		if (null == method) {
-			throw new RuntimeException(new NoSuchMethodException(remoting
-					.getOperation()));
+			throwNoSuchMethodException(remoting, opargsClasses, opargs);
 		}
 
 		// if the same operation exists on the actual service class, invoke it
 		if (null == (method = findMethod(serviceConfig.getService().getClass(),
 				remoting.getOperation(), opargsClasses, opargs))) {
-			throw new RuntimeException(new NoSuchMethodException(remoting
-					.getOperation()));
+			throwNoSuchMethodException(remoting, opargsClasses, opargs);
 		}
 
 		new RemotingContext(remoting);
@@ -441,6 +428,27 @@ public class FlexRemotingAMFFactory implements
 			}
 			throw e;
 		}
+	}
+
+	private Class<?> findServiceClass(OSGiServiceConfig serviceConfig) {
+		try {
+			return serviceConfig.getProvider().loadClass(
+					serviceConfig.getName());
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void throwNoSuchMethodException(RemotingMessage remoting,
+			Class<?>[] classes, Object[] args) {
+
+		Exception ex = new NoSuchMethodException(remoting.getDestination()
+				+ "#" + remoting.getOperation() + ", " + Arrays.asList(classes)
+				+ " = " + Arrays.asList(args));
+		ex.fillInStackTrace();
+		ex.printStackTrace();
+		throw new RuntimeException(ex);
 	}
 
 	@SuppressWarnings("unchecked")

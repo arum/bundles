@@ -61,19 +61,17 @@ public class ArrayCollection extends ArrayList<Object> implements
 		out.writeObject(toArray());
 	}
 
-	public void readExternal(ObjectInput in) throws IOException,
-			ClassNotFoundException {
-		Object o = in.readObject();
-		if (o != null) {
-			if (o instanceof Collection<?>)
-				addAll((Collection<?>) o);
-			else if (o.getClass().isArray())
-				addAll((Object[]) o);
-			else
-				// should we throw an exception ?
-				add(o);
-		}
-	}
+   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        Object o = in.readObject();
+        if (o != null) {
+            if (o instanceof Collection<?>)
+                addAll((Collection<?>)o);
+            else if (o.getClass().isArray())
+                addAll((Object[])o);
+            else // should we throw an exception ?
+                add(o);
+        }
+    }
 
 	@Override
 	public String toString() {

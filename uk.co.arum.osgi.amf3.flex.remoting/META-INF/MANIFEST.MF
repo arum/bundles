@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: AMF3 Flex Remoting for OSGi
 Bundle-SymbolicName: uk.co.arum.osgi.amf3.flex.remoting
-Bundle-Version: 1.0.3
+Bundle-Version: 1.0.4
 Bundle-Vendor: Arum Systems Ltd
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Import-Package: flex.messaging.io,

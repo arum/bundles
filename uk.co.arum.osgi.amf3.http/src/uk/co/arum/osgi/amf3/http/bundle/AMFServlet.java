@@ -195,7 +195,7 @@ public class AMFServlet extends HttpServlet implements ManagedService {
 							if (null != eventAdmin) {
 								eventAdmin
 										.postEvent(new HttpSessionExpiredEvent(
-												context));
+												event.getSession()));
 							} else if (null != logService) {
 								logService
 										.log(LogService.LOG_WARNING,

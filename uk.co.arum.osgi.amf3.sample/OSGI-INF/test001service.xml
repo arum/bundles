@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="uk.co.arum.osgi.amf3.sample.test001.Test001Service">
+   <implementation class="uk.co.arum.osgi.amf3.sample.test001.Test001Service"/>
+   <property name="AMF_SERVICE_NAME" type="String" value="uk.co.arum.osgi.amf3.sample.test001.Test001Service"/>
+   <service>
+      <provide interface="uk.co.arum.osgi.amf3.sample.test001.Test001Service"/>
+   </service>
+</scr:component>

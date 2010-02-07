@@ -23,16 +23,16 @@ package uk.co.arum.osgi.amf3.http.events;
 
 import java.util.Dictionary;
 
-import org.osgi.service.event.Event;
+import javax.servlet.http.HttpSession;
 
-import uk.co.arum.osgi.amf3.http.HttpRequestContext;
+import org.osgi.service.event.Event;
 
 public class HttpSessionExpiredEvent extends Event {
 
 	public static final String TOPIC = HttpSessionExpiredEvent.class.getName()
 			.replace('.', '/');
 
-	private final HttpRequestContext context;
+	private final HttpSession expiredSession;
 
 	/**
 	 * The request context that created this session.
@@ -40,13 +40,13 @@ public class HttpSessionExpiredEvent extends Event {
 	 * @param context
 	 *            the request context
 	 */
-	public HttpSessionExpiredEvent(HttpRequestContext context) {
+	public HttpSessionExpiredEvent(HttpSession session) {
 		super(TOPIC, (Dictionary<?, ?>) null);
-		this.context = context;
+		this.expiredSession = session;
 	}
 
-	public HttpRequestContext getContext() {
-		return context;
+	public HttpSession getExpiredSession() {
+		return expiredSession;
 	}
 
 }

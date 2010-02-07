@@ -31,6 +31,9 @@
 
 	<mx:Script>
 		<![CDATA[
+			import uk.co.arum.osgi.amf3.sample.test001.MidLevel;
+			import uk.co.arum.osgi.amf3.sample.test001.BottomLevel;
+			import uk.co.arum.osgi.amf3.sample.test001.TopLevel;
 			import mx.utils.StringUtil;
 			import mx.collections.ArrayCollection;
 			import mx.messaging.channels.AMFChannel;
@@ -135,6 +138,46 @@
 				messagesArea.text=event.toString() + "\n" + messagesArea.text;
 				messagesArea.text=event.message.body.Say + "\n" + messagesArea.text;
 			}
+			
+			private function executeTest001() : void {
+				
+				var bottom1:BottomLevel = new BottomLevel();
+				bottom1.name = "bottom1";
+
+				var bottom2:BottomLevel = new BottomLevel();
+				bottom2.name = "bottom2";
+
+				var bottom3:BottomLevel = new BottomLevel();
+				bottom3.name = "bottom3";
+				
+				var mid1:MidLevel = new MidLevel();
+				mid1.name = "mid1";
+				mid1.bottom = bottom1;
+
+				var mid2:MidLevel = new MidLevel();
+				mid2.name = "mid2";
+				mid2.bottom = bottom2;
+
+				var mid3:MidLevel = new MidLevel();
+				mid3.name = "mid3";
+				mid3.bottom = bottom3;
+
+				// this is the one i expect to cause problems, as it references an object already referenced
+				var mid4:MidLevel = new MidLevel();
+				mid4.name = "mid4";
+				mid4.bottom = bottom1;
+				
+				var top:TopLevel = new TopLevel();
+				top.midLevels = new ArrayCollection();
+				top.midLevels.addItem(mid1);
+				top.midLevels.addItem(mid2);
+				top.midLevels.addItem(mid3);
+				top.midLevels.addItem(mid4);
+//				top.midLevels = [ mid1, mid2, mid3, mid4 ];
+				
+				test001.executeTest(top);
+			}
+			
 		]]>
 	</mx:Script>
 
@@ -146,6 +189,10 @@
 	<mx:Producer id="producer"
 				 destination="events"
 				 fault="onFault(event)"/>
+
+	<mx:RemoteObject id="test001"
+					 endpoint="/amf3osgi"
+					 destination="uk.co.arum.osgi.amf3.sample.test001.Test001Service" />
 
 	<mx:RemoteObject id="simpleService"
 					 endpoint="/amf3osgi"
@@ -223,6 +270,11 @@
 				   label="Send Sample Object"
 				   click="simpleService.sendSampleObject(sample)"
 				   toolTip="Send and retrieve a more complicated sample object"/>
+				   
+		<mx:Button id="test001Button"
+				   label="Execute Test 001"
+				   click="executeTest001()" />
+				   
 	</mx:HBox>
 
 	<mx:HBox width="100%"

@@ -56,7 +56,7 @@ public class AMF3Deserializer extends DataInputStream implements ObjectInput,
 	protected final XMLUtil xmlUtil = new XMLUtil();
 
 	protected final AMFFactory factory;
-
+	
 	// /////////////////////////////////////////////////////////////////////////
 	// Constructor.
 
@@ -110,29 +110,29 @@ public class AMF3Deserializer extends DataInputStream implements ObjectInput,
 		}
 	}
 
-	protected int readAMF3Integer() throws IOException {
-		int result = 0;
+    protected int readAMF3Integer() throws IOException {
+        int result = 0;
 
-		int n = 0;
-		int b = readUnsignedByte();
-		while ((b & 0x80) != 0 && n < 3) {
-			result <<= 7;
-			result |= (b & 0x7f);
-			b = readUnsignedByte();
-			n++;
-		}
-		if (n < 3) {
-			result <<= 7;
-			result |= b;
-		} else {
-			result <<= 8;
-			result |= b;
-			if ((result & 0x10000000) != 0)
-				result |= 0xe0000000;
-		}
+        int n = 0;
+        int b = readUnsignedByte();
+        while ((b & 0x80) != 0 && n < 3) {
+            result <<= 7;
+            result |= (b & 0x7f);
+            b = readUnsignedByte();
+            n++;
+        }
+        if (n < 3) {
+            result <<= 7;
+            result |= b;
+        } else {
+            result <<= 8;
+            result |= b;
+            if ((result & 0x10000000) != 0)
+                result |= 0xe0000000;
+        }
 
-		return result;
-	}
+        return result;
+    }
 
 	protected Double readAMF3Double() throws IOException {
 		double d = readDouble();
@@ -141,61 +141,58 @@ public class AMF3Deserializer extends DataInputStream implements ObjectInput,
 		return result;
 	}
 
-	protected String readAMF3String() throws IOException {
-		String result = null;
+    protected String readAMF3String() throws IOException {
+        String result = null;
 
-		int type = readAMF3Integer();
-		if ((type & 0x01) == 0) // stored string
-			result = getFromStoredStrings(type >> 1);
-		else {
-			int length = type >> 1;
+        int type = readAMF3Integer();
+        if ((type & 0x01) == 0) // stored string
+            result = getFromStoredStrings(type >> 1);
+        else {
+            int length = type >> 1;
 
-			if (length > 0) {
+            if (length > 0) {
 
-				byte[] utfBytes = new byte[length];
-				char[] utfChars = new char[length];
+                byte[] utfBytes = new byte[length];
+                char[] utfChars = new char[length];
 
-				readFully(utfBytes);
+                readFully(utfBytes);
 
-				int c, c2, c3, iBytes = 0, iChars = 0;
-				while (iBytes < length) {
-					c = utfBytes[iBytes++] & 0xFF;
-					if (c <= 0x7F)
-						utfChars[iChars++] = (char) c;
-					else {
-						switch (c >> 4) {
-						case 12:
-						case 13:
-							c2 = utfBytes[iBytes++];
-							if ((c2 & 0xC0) != 0x80)
-								throw new UTFDataFormatException("Malformed input around byte "
-										+ (iBytes - 2));
-							utfChars[iChars++] = (char) (((c & 0x1F) << 6) | (c2 & 0x3F));
-							break;
-						case 14:
-							c2 = utfBytes[iBytes++];
-							c3 = utfBytes[iBytes++];
-							if (((c2 & 0xC0) != 0x80) || ((c3 & 0xC0) != 0x80))
-								throw new UTFDataFormatException("Malformed input around byte "
-										+ (iBytes - 3));
-							utfChars[iChars++] = (char) (((c & 0x0F) << 12)
-									| ((c2 & 0x3F) << 6) | ((c3 & 0x3F) << 0));
-							break;
-						default:
-							throw new UTFDataFormatException("Malformed input around byte "
-									+ (iBytes - 1));
-						}
-					}
-				}
-				result = new String(utfChars, 0, iChars);
+                int c, c2, c3, iBytes = 0, iChars = 0;
+                while (iBytes < length) {
+                    c = utfBytes[iBytes++] & 0xFF;
+                    if (c <= 0x7F)
+                        utfChars[iChars++] = (char)c;
+                    else {
+                        switch (c >> 4) {
+                        case 12: case 13:
+                            c2 = utfBytes[iBytes++];
+                            if ((c2 & 0xC0) != 0x80)
+                                throw new UTFDataFormatException("Malformed input around byte " + (iBytes-2));
+                            utfChars[iChars++] = (char)(((c & 0x1F) << 6) | (c2 & 0x3F));
+                            break;
+                        case 14:
+                            c2 = utfBytes[iBytes++];
+                            c3 = utfBytes[iBytes++];
+                            if (((c2 & 0xC0) != 0x80) || ((c3 & 0xC0) != 0x80))
+                                throw new UTFDataFormatException("Malformed input around byte " + (iBytes-3));
+                            utfChars[iChars++] = (char)(((c & 0x0F) << 12) | ((c2 & 0x3F) << 6) | ((c3 & 0x3F) << 0));
+                            break;
+                        default:
+                            throw new UTFDataFormatException("Malformed input around byte " + (iBytes-1));
+                        }
+                    }
+                }
+                result = new String(utfChars, 0, iChars);
 
-				addToStoredStrings(result);
-			} else
-				result = "";
-		}
 
-		return result;
-	}
+                addToStoredStrings(result);
+            } else
+                result = "";
+        }
+
+
+        return result;
+    }
 
 	protected Date readAMF3Date() throws IOException {
 		Date result = null;
@@ -256,7 +253,6 @@ public class AMF3Deserializer extends DataInputStream implements ObjectInput,
 		if ((type & 0x01) == 0) {
 			// stored object.
 			return getFromStoredObjects(type >> 1);
-
 		}
 
 		boolean inlineClassDef = (((type >> 1) & 0x01) != 0);
@@ -274,7 +270,6 @@ public class AMF3Deserializer extends DataInputStream implements ObjectInput,
 		// read object content...
 		if ((objectEncoding & 0x01) != 0) {
 			return readExternalisedObject(desc);
-
 		}
 
 		if (null == desc.getType() || desc.getType().trim().length() == 0) {
@@ -286,12 +281,10 @@ public class AMF3Deserializer extends DataInputStream implements ObjectInput,
 		addToStoredObjects(result);
 
 		// defined values...
-		if (desc.getPropertiesCount() > 0) {
-			for (int i = 0; i < desc.getPropertiesCount(); i++) {
-				byte vType = readByte();
-				Object value = readObject(vType);
-				desc.setPropertyValue(i, result, value);
-			}
+		for (int i = 0; i < desc.getPropertiesCount(); i++) {
+			byte vType = readByte();
+			Object value = readObject(vType);
+			desc.setPropertyValue(i, result, value);
 		}
 
 		// dynamic values...
@@ -318,8 +311,7 @@ public class AMF3Deserializer extends DataInputStream implements ObjectInput,
 
 		String className = readAMF3String();
 
-		desc = new DefaultActionScriptClassDescriptor(factory,
-				className,
+		desc = new DefaultActionScriptClassDescriptor(factory, className,
 				encoding);
 
 		addToStoredClassDescriptors(desc);
@@ -344,6 +336,7 @@ public class AMF3Deserializer extends DataInputStream implements ObjectInput,
 		} else {
 
 			result = factory.newInstance(desc.getType());
+			index = addToStoredObjects(result);
 			if (result instanceof Externalizable) {
 				try {
 					((Externalizable) result).readExternal(this);
@@ -351,7 +344,8 @@ public class AMF3Deserializer extends DataInputStream implements ObjectInput,
 				} catch (ClassNotFoundException e) {
 					throw new RuntimeException(e);
 				}
-				index = addToStoredObjects(result);
+			} else {
+				index = null;
 			}
 
 		}
@@ -405,8 +399,10 @@ public class AMF3Deserializer extends DataInputStream implements ObjectInput,
 	// /////////////////////////////////////////////////////////////////////////
 	// Cached objects methods.
 
-	protected void addToStoredStrings(String s) {
+	protected int addToStoredStrings(String s) {
+		int index = storedStrings.size();
 		storedStrings.add(s);
+		return index;
 	}
 
 	protected String getFromStoredStrings(int index) {
@@ -425,15 +421,15 @@ public class AMF3Deserializer extends DataInputStream implements ObjectInput,
 	}
 
 	protected Object getFromStoredObjects(int index) {
-		Object o = storedObjects.get(index);
-		return o;
+		return storedObjects.get(index);
 	}
 
 	protected void addToStoredClassDescriptors(ActionScriptClassDescriptor desc) {
 		storedClassDescriptors.add(desc);
 	}
 
-	protected ActionScriptClassDescriptor getFromStoredClassDescriptors(int index) {
+	protected ActionScriptClassDescriptor getFromStoredClassDescriptors(
+			int index) {
 		ActionScriptClassDescriptor desc = storedClassDescriptors.get(index);
 		return desc;
 	}

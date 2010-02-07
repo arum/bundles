@@ -63,9 +63,11 @@ public class MethodProperty extends Property {
 
 				if (null != value
 						&& value.getClass().equals(ArrayCollection.class)) {
-					value = convertArrayCollection((ArrayCollection) value);
-				}
 
+					value = convertArrayCollection((ArrayCollection) value);
+
+				} 
+				
 			}
 
 		}
@@ -104,7 +106,7 @@ public class MethodProperty extends Property {
 	private boolean isType0x9Bug(Object value) {
 		if (value instanceof Object[]) {
 			Object[] array = (Object[]) value;
-			if (array.length == 1 && array[0] == null) {
+			if (array.length == 0 || array.length == 1 && array[0] == null) {
 				return true;
 			}
 		}

@@ -2,13 +2,13 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: AMF Support for OSGi
 Bundle-SymbolicName: uk.co.arum.osgi.amf3
-Bundle-Version: 1.0.2
+Bundle-Version: 2.0.0
 Bundle-Vendor: Arum Systems Ltd
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ClassPath: .
 Export-Package: flex.messaging.io,
- uk.co.arum.osgi.amf3;version="1.0.0",
- uk.co.arum.osgi.amf3.io;version="1.0.0";uses:="uk.co.arum.osgi.amf3"
+ uk.co.arum.osgi.amf3;version="2.0.0",
+ uk.co.arum.osgi.amf3.io;version="2.0.0";uses:="uk.co.arum.osgi.amf3"
 Import-Package: flex.messaging.io,
  javax.xml.parsers;resolution:=optional,
  javax.xml.transform;resolution:=optional,
@@ -16,5 +16,5 @@ Import-Package: flex.messaging.io,
  javax.xml.transform.stream;resolution:=optional,
  org.w3c.dom;resolution:=optional,
  org.xml.sax;resolution:=optional,
- uk.co.arum.osgi.amf3;version="1.0.0",
- uk.co.arum.osgi.amf3.io;version="1.0.0"
+ uk.co.arum.osgi.amf3;version="[2.0.0,3.0.0)",
+ uk.co.arum.osgi.amf3.io;version="[2.0.0,3.0.0)"

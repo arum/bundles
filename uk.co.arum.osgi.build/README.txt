@@ -1,4 +1,5 @@
 
+
 How to build
 ============
 
@@ -9,11 +10,13 @@ You need:
 - Flex 3 SDK, required to build:
 	- uk.co.arum.osgi.amf3.sample
 
-These bundles depend on a couple of Eclipse OSGi Tools for ant.  To build, you should check out the 
-code for those projects as well, and build them first.  This will insert them in to your local repository 
-until such time as they are available in a an online repository.
 
+These bundles depend on a couple of Eclipse OSGi Tools for ant which are included in the release.
+
+The code for these tools can be found here:
 http://code.google.com/p/eclipseosgitools/
+
+Note that eventually the use of these will be deprecated in favour of bnd tools.
 
 
 Procedure for building with Flex 3:

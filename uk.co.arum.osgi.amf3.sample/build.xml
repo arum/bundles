@@ -5,7 +5,7 @@
 <project name="uk.co.arum.osgi.amf3.sample" default="default" 
 		xmlns:ivy="antlib:org.apache.ivy.ant">
  
-	<property name="module.version" value="2.0.0" />
+	<property name="module.version" value="2.0.1" />
  
 	<property name="has.additional.compile" value="true"/>
  

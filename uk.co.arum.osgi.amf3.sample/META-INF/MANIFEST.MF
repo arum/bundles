@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Sample Flex OSGi AMF Bundle
 Bundle-SymbolicName: uk.co.arum.osgi.amf3.sample
-Bundle-Version: 2.0.0
+Bundle-Version: 2.0.1
 Bundle-Vendor: Arum Systems Ltd
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Import-Package: flex.messaging.messages,
@@ -15,4 +15,4 @@ Import-Package: flex.messaging.messages,
  uk.co.arum.osgi.amf3.flex.remoting;version="1.0.0",
  uk.co.arum.osgi.amf3.flex.remoting.events;version="1.0.0",
  uk.co.arum.osgi.amf3.http;version="1.0.0"
-Service-Component: OSGI-INF/publishedobjecthandler.xml, OSGI-INF/simpleservice.xml, OSGI-INF/test001service.xml
+Service-Component: OSGI-INF/*.xml

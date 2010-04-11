@@ -190,6 +190,17 @@
 				 destination="events"
 				 fault="onFault(event)"/>
 
+	<mx:RemoteObject id="anotherSample"
+					 endpoint="/amf3osgi"
+					 destination="anotherSample">
+		
+		<mx:method id="add"
+			name="add"
+			result="addResult.text = ResultEvent(event).message.body.toString()" 
+			fault="onFault(event)"/>
+		
+	</mx:RemoteObject>
+
 	<mx:RemoteObject id="test001"
 					 endpoint="/amf3osgi"
 					 destination="uk.co.arum.osgi.amf3.sample.test001.Test001Service" />
@@ -293,6 +304,14 @@
 						 width="100%"
 						 height="100%"/>
 		</mx:Panel>
+	</mx:HBox>
+	
+	<mx:HBox>
+		<mx:TextInput id="addX" />
+		<mx:Label text=" + " />
+		<mx:TextInput id="addY" />
+		<mx:Button label=" = " click="anotherSample.add(Number(addX.text), Number(addY.text))" />
+		<mx:TextInput id="addResult"  />
 	</mx:HBox>
 
 	<mx:HBox width="100%">

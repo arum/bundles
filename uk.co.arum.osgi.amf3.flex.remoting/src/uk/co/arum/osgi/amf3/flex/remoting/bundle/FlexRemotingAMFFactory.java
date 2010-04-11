@@ -398,12 +398,20 @@ public class FlexRemotingAMFFactory implements
 			}
 		}
 
-		Class<?> serviceClass = findServiceClass(serviceConfig);
 		Method method = null;
 
-		if (null != serviceClass) {
-			method = findMethod(serviceClass, remoting.getOperation(),
-					opargsClasses, opargs);
+		for (int i = 0; i < serviceConfig.getServiceTypes().length; i++) {
+			Class<?> serviceClass = findServiceClass(serviceConfig,
+					serviceConfig.getServiceTypes()[i]);
+
+			if (null != serviceClass) {
+				method = findMethod(serviceClass, remoting.getOperation(),
+						opargsClasses, opargs);
+				if (null != method) {
+					break;
+				}
+			}
+			
 		}
 
 		// if no operation has been found, throw an exception
@@ -430,10 +438,10 @@ public class FlexRemotingAMFFactory implements
 		}
 	}
 
-	private Class<?> findServiceClass(OSGiServiceConfig serviceConfig) {
+	private Class<?> findServiceClass(OSGiServiceConfig serviceConfig,
+			String className) {
 		try {
-			return serviceConfig.getProvider().loadClass(
-					serviceConfig.getName());
+			return serviceConfig.getProvider().loadClass(className);
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 			throw new RuntimeException(e);

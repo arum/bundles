@@ -23,8 +23,7 @@ package uk.co.arum.osgi.amf3.http.bundle;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Dictionary;
-import java.util.Hashtable;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -34,8 +33,6 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
 
-import org.osgi.service.cm.ConfigurationException;
-import org.osgi.service.cm.ManagedService;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.log.LogService;
@@ -47,7 +44,7 @@ import uk.co.arum.osgi.amf3.http.events.HttpSessionCreatedEvent;
 import uk.co.arum.osgi.amf3.http.events.HttpSessionExpiredEvent;
 import uk.co.arum.osgi.amf3.io.AMFProcessor;
 
-public class AMFServlet extends HttpServlet implements ManagedService {
+public class AMFServlet extends HttpServlet {
 
 	private static final String AMF_SERVLET_ALIAS = "amf.servlet.alias";
 
@@ -64,8 +61,6 @@ public class AMFServlet extends HttpServlet implements ManagedService {
 	private LogService logService;
 
 	private String alias;
-
-	private boolean active;
 
 	public AMFServlet() {
 	}
@@ -108,52 +103,20 @@ public class AMFServlet extends HttpServlet implements ManagedService {
 		compoundFactory.remove(factory);
 	}
 
-	public void activate() throws Exception {
-		logService.log(LogService.LOG_INFO, "AMFServlet - ACTIVATED");
-		active = true;
-		updated(null);
+	public void activate(Map<String, Object> properties) throws Exception {
+		logService.log(LogService.LOG_INFO, "AMFServlet - ACTIVATED : "
+				+ properties);
+		alias = (String) properties.get(AMF_SERVLET_ALIAS);
+		httpService.registerServlet(alias, this, null, null);
+		processor = new AMFProcessor(compoundFactory);
 	}
 
 	public void deactivate() throws Exception {
 		logService.log(LogService.LOG_INFO, "AMFServlet - DEACTIVATING");
-		active = false;
-		cleanup();
-	}
-
-	private void cleanup() {
 		processor = null;
 		if (null != httpService && alias != null) {
 			httpService.unregister(alias);
 		}
-	}
-
-	@SuppressWarnings("unchecked")
-	public void updated(Dictionary config) throws ConfigurationException {
-		logService.log(LogService.LOG_INFO, "AMFServlet - updated(" + config
-				+ ")");
-
-		cleanup();
-
-		if (active) {
-			if (null == config) {
-				config = createDefaultConfig();
-			}
-			try {
-				alias = (String) config.get(AMF_SERVLET_ALIAS);
-				httpService.registerServlet(alias, this, null, null);
-				processor = new AMFProcessor(compoundFactory);
-			} catch (Exception e) {
-				throw new ConfigurationException(AMF_SERVLET_ALIAS,
-						"Unable to register servlet", e);
-			}
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	private Dictionary createDefaultConfig() {
-		Dictionary config = new Hashtable();
-		config.put(AMF_SERVLET_ALIAS, "/amf3osgi");
-		return config;
 	}
 
 	@Override

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?pde version="3.5"?>
+
+<target name="ArumBundles">
+<locations>
+<location path="/Users/brindy/Dropbox/Workspaces/bundles/uk.co.arum.osgi.build/framework" type="Directory"/>
+</locations>
+</target>

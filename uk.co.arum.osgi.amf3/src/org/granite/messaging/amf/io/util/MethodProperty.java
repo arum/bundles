@@ -20,6 +20,7 @@
 
 package org.granite.messaging.amf.io.util;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -61,13 +62,30 @@ public class MethodProperty extends Property {
 					value = null;
 				}
 
-				if (null != value
-						&& value.getClass().equals(ArrayCollection.class)) {
+				if (null != value) {
+					if (value.getClass().isArray()
+							&& setter.getParameterTypes()[0].isArray()) {
+						
+						Class<?> arrayType = setter.getParameterTypes()[0].getComponentType();
 
-					value = convertArrayCollection((ArrayCollection) value);
+						if (!arrayType.equals(value.getClass()
+								.getComponentType())) {
+							int len = Array.getLength(value);
 
-				} 
-				
+							Object array = Array.newInstance(arrayType, len);
+
+							for (int i = 0; i < len; i++) {
+								Array.set(array, i, Array.get(value, i));
+							}
+
+							value = array;
+						}
+
+					} else if (value.getClass().equals(ArrayCollection.class)) {
+						value = convertArrayCollection((ArrayCollection) value);
+					}
+				}
+
 			}
 
 		}
@@ -80,6 +98,7 @@ public class MethodProperty extends Property {
 			System.out.println("Exception " + e);
 			System.out.println(setter.getName() + " : " + instance + " : "
 					+ value + " : " + convert);
+			e.printStackTrace();
 
 			throw new RuntimeException(e);
 		}

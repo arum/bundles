@@ -90,7 +90,7 @@ public class OSGiAMFConfig {
 		String[] serviceTypes = (String[]) ref
 				.getProperty(Constants.OBJECTCLASS);
 
-		String serviceName = (String) ref.getProperty(propName);
+		String serviceName = getServiceName(ref);
 
 		OSGiServiceConfig config = new OSGiServiceConfig(serviceName, ref
 				.getBundle(), o, serviceTypes);
@@ -106,8 +106,16 @@ public class OSGiAMFConfig {
 		bundleCounts.put(ref.getBundle().getBundleId(), count);
 	}
 
+	private String getServiceName(ServiceReference ref) {
+		Object serviceNames = ref.getProperty(propName);
+		if (serviceNames instanceof String[]) {
+			return ((String[]) serviceNames)[0];
+		}
+		return (String) serviceNames;
+	}
+
 	public void removeOSGiService(ServiceReference ref) {
-		String serviceName = (String) ref.getProperty(propName);
+		String serviceName = getServiceName(ref);
 
 		configs.remove(serviceName);
 		context.ungetService(ref);

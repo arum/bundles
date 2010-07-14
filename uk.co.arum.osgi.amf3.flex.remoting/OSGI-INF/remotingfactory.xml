@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" deactivate="deactivate" name="uk.co.arum.osgi.amf3.flex.remoting.RemotingAMFFactory">
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" 
+	activate="activate" deactivate="deactivate" 
+	name="uk.co.arum.osgi.amf3.flex.remoting.RemotingAMFFactory"
+	immediate="true">
    <implementation class="uk.co.arum.osgi.amf3.flex.remoting.bundle.FlexRemotingAMFFactory"/>
    <reference bind="bindMessagingManager" cardinality="1..1" interface="uk.co.arum.osgi.amf3.flex.remoting.bundle.MessagingManager" name="MessagingManager" policy="static" unbind="unbindMessagingManager"/>
    <reference bind="bindLogService" cardinality="1..1" interface="org.osgi.service.log.LogService" name="LogService" policy="static" unbind="unbindLogService"/>
